@@ -20,9 +20,9 @@ permalink: /tutorials/building-the-f8-app/local-setup/
 
 开始之前，请需要安装这些前置依赖:
 
-1. [React Native](http://facebook.github.io/react-native/docs/getting-started.html) (follow iOS and Android guides)
-2. [CocoaPods](http://cocoapods.org) 1.0+ (only for iOS)
-3. [MongoDB](https://www.mongodb.org/downloads) (needed to run Parse Server locally)
+1. [React Native](http://facebook.github.io/react-native/docs/getting-started.html)
+2. [CocoaPods](http://cocoapods.org) 1.0+ (只有 iOS 需要)
+3. [MongoDB](https://www.mongodb.org/downloads) (本地运行 Parse Server 需要)
 
 ### 配置
 

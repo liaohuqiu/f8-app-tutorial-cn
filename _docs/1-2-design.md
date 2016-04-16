@@ -326,7 +326,7 @@ render() {
 
 他们属于 `TabBarItem` 的一部分，点击之后，这部分会显示。
 
-### 设计迭代周期
+<h3 id='the-design-iteration-cycle'>设计迭代周期</h3>
 
 不管你在开发什么应用，快速调整 UI 总是非常痛苦的。如果工程师和设计师坐在一起调，整个处理过程会慢下来。
 
@@ -365,8 +365,6 @@ class Playground extends React.Component {
 <!---
 TOWATCH: Changes to the Playground component
 -->
-
-This simply creates an empty view that can be swapped out to load instead of the actual app. When we combine this with some example definitions in one of the UI components, in this case `AddToScheduleButton.js`:
 
 这个控件简单地创建了一个空的 view，这个 view 可以被真正的控件置换。比如当我们在一个 UI 组件中，把这个和一些定义绑定，以 `AddToScheduleButton` 为例说明：
 

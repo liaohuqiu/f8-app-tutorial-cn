@@ -9,19 +9,17 @@ intro: >
   探索如何使用 Nuclide，Flow，以及 Jest，以提高编写 React Native 时的代码质量。
 ---
 
-*This is a series of tutorials designed to introduce React Native and its Open Source ecosystem in plain English, written alongside the building of the F8 2016 app for Android and iOS.*
+在传统的软件开发周期中，测试经常被当做是开发接近完成后，一个特别的阶段。对于新生的开源框架，这种看法似乎更接近于事实，因为这些项目的发布时，有时没有相关的测试技术。
 
-In classic software development life cycles, the testing phase is always seen as just that - a distinct phase that usually happens near the end of development. This can be even more true when working with freshly minted Open Source frameworks, because their releases tend to not be accompanied by any kind of testing technology.
+幸好 Facebook 在开发 React Native 之初就持续地将测试技术放在心中。在这一部分，我们将会展示如何使用 [Nuclide](http://nuclide.io)，[Flow](http://flowtype.org) 和 [Jest](http://facebook.github.io/jest/) 提高你编写的 React Native 的代码质量的。
 
-Luckily, React Native was built by Facebook from the very beginning with continuous testing techniques in mind. In this part we'll explore how you can use [Nuclide](http://nuclide.io), [Flow](http://flowtype.org), and [Jest](http://facebook.github.io/jest/) with React Native to improve the quality of your code as you're writing it.
+### Flow：使用类型检查以免写出糟糕的代码
 
-### Flow: Type-checking to Stop Writing Bad Code
+[Flow](http://flowtype.org) 提供了对 JavaScript 的 [静态类型检查](http://flowtype.org/docs/about-flow.html#_)。Flow 允许以一种渐进的方式，逐步将它的特性运用到我们的代码中。当我们仅仅相对部分代码引入类型检查时，这点特别重要，否则我们就要重改整个 app 的代码了。
 
-[Flow](http://flowtype.org) provides JavaScript with [static type checking](http://flowtype.org/docs/about-flow.html#_), and works in a gradual way, allowing you to slowly add Flow features to your code. This is really useful because we can introduce type checking in particular parts of the code without having to re-write the entire app to be Flow-compatible.
+在 F8 app 中，我们决定从一开始就完全采用 Flow，在每一个必要的地方都加上 [类型注解](http://flowtype.org/docs/type-annotations.html#_)，然后 Flow 替我们完成这些检查。
 
-In our F8 app, we decided from the start to use React Native with Flow in its most complete form, adding [type annotations](http://flowtype.org/docs/type-annotations.html#_) everywhere necessary, and letting Flow work its magic as we progressed.
-
-For example, lets look at one of the simple Actions we described in the [Data tutorial]({{ site.baseurl }}/tutorials/building-the-f8-app/data/):
+比如，让我来看一个 [数据集成章节]({{ site.baseurl }}/tutorials/building-the-f8-app/data/) 提到的简单的 Action：
 
 ```js
 /* from js/actions/login.js */
@@ -39,7 +37,7 @@ function skipLogin(): Action {
 }
 ```
 
-We've added the `@flow` flag to the file header (which [tells Flow to check the code](http://flowtype.org/docs/getting-started.html#_)) and then we're using Flow's [type annotations](http://flowtype.org/docs/type-annotations.html#_) to indicate that whatever is returned by `skipLogin()` must be of type `Action`. But that type isn't built into React Native, or Redux, so we have defined it ourselves:
+在第 13 行，我们加了一个 `@flow` 标志，让 [Flow 来检查这些代码](http://flowtype.org/docs/getting-started.html#_))。然后，我们用 Flow 的 [类型注解](http://flowtype.org/docs/type-annotations.html#_) 来标明 `skipLogin()` 的返回值必须是 `Action` 类型。但这个类型不是 React Native 或者 Redux 的内置类型，我们需要自己定义：
 
 ```js
 /* from js/actions/types.js */
@@ -74,7 +72,11 @@ export type Action =
 
 ```
 
-Here we have created a [Flow type alias](http://flowtype.org/docs/type-aliases.html#_) that says that anything of type `Action` must be one of a series of different potential object shapes. The `SKIPPED_LOGIN` Action must only contain its own type label, whereas for comparison, a `LOADED_SURVEYS` Action must return the type label and a list item. We can see that the relevant Action Creator does just that:
+这里，我们创建了一些 [Flow 的类型别名](http://flowtype.org/docs/type-aliases.html#_)，`Action` 必须只能是这一些列不同的对象形式中的一种。
+
+比如 `SKIPPED_LOGIN` 这个 Action 只能包含一个 type 标签；而 `LOADED_SURVEYS` Action 出了 type 还必须返回一个列表。
+
+我们可以看到对应的 Action creator 确实也是这样做的：
 
 ```js
 /* from js/actions/surveys.js */
@@ -87,9 +89,9 @@ async function loadSurveys(): Promise<Action> {
 }
 ```
 
-Because we are using lots of different Actions in the app, this strong typing check lets us know simple things like having a typo in the type label, or more important things like the data payload being in the wrong format.
+我们在 app 中用了许多的 Action，强类型检查让我们不至于犯下一些比如拼写错误这样的低级的错误。更为重要的是，数据格式错误时，我们也能及时发现。
 
-We also then get the same strong typing checks in our Reducers:
+对于 Reducer，我们也做了一样的强类型检查：
 
 ```js
 /* from js/reducers/surveys.js */
@@ -102,7 +104,7 @@ function surveys(state: State = [], action: Action): State {
 }
 ```
 
-Because the `action` argument is typed as the same `Action` as above, the Reducer function must use an `action.type` that is valid. We can also use type aliases to define shapes for the Reducer's `state` tree section:
+因为 `action` 参数指定为了 `Action` 类型，Reducer 函数必须使用一个有效的 `action.type`。当我们定义 `state` 树的部分结构时，我们也使用了类型别名去定义 `state` 的结构：
 
 ```js
 /* from js/reducers/user.js */
@@ -127,17 +129,19 @@ function user(state: State = initialState, action: Action): State {
 }
 ```
 
-We showed you this `initialState` object in the [data tutorial]({{ site.baseurl }}/tutorials/building-the-f8-app/data/), but now you can see how we have forced this `state` tree section to conform to a defined Flow type. If the Reducer is sent, or tries to return, any `state` that doesn't conform to this same shape, we'll see a Flow type checking error.
+在 [数据整合章节]({{ site.baseurl }}/tutorials/building-the-f8-app/data/)，我们看到了这个 `initialState` 对象，你现在将会看到，我们是如何让 `state` 树的部分去遵从这个 Flow 类型的，任何不满足类型要求的 `state`，都会有 Flow 类型检查错误。
 
-Note that Flow checks are run at compile-time only, and the React Native packager [strips them automatically](https://github.com/facebook/react-native/blob/master/babel-preset/configs/main.js#L32) - this means using Flow in your code doesn't have any kind of runtime performance penalty.
+Note that Flow checks are run at compile-time only, and the React Native packager 
 
-Of course, right now, we still have to manually run the Flow type-checker every time we want to test some code (using the [Flow command line interface](http://flowtype.org/docs/cli.html#_)) but we can also use Nuclide to get this kind of verification *as we write the code*.
+请注意，Flow 的检查只是编译时的。 React Native packager [会自动将这些移除](https://github.com/facebook/react-native/blob/master/babel-preset/configs/main.js#L32)。这也就是说，使用 Flow 不会导致运行时的任何性能损失。
 
-### Nuclide: A React Native-aware Development Environment
+当然，目前每次我们想测试代码的时候，我们必须手动运行 [Flow 命令行](http://flowtype.org/docs/cli.html#_) 来进行类型检查。但我们也可以用 Nuclide 在 **编码的时候** 来完成这些验证。
 
-The [Nuclide website](http://nuclide.io/docs/platforms/react-native/) contains a full rundown of the kind of React Native tailored features it offers, but suffice to say, it's a first-class IDE for React Native, built for the same people at Facebook who created React Native, and who use it to write Facebook apps every day.
+### Nuclide：React Native 的 IDE
 
-The Flow integration is what we're specifically interested in though. Here we can see a sample of code from the same user Reducer that we showed with the typed `state` object above:
+[Nuclide 的网站上](http://nuclide.io/docs/platforms/react-native/) 有对其提供的针对 React Native 量身定制的功能的全面介绍。我只想说，Nuclide 确实是开发 React Native 的一流 IDE。是为那些在 Facebook 写 React Native，以及使用 React Native 来开发 app 的人们开发的。
+
+Flow 的集成是我们尤其感兴趣的，我们这里可以看一些 Reducer 中的代码：
 
 ```js
   if (action.type === 'SKIPPED_LOGIN') {
@@ -151,26 +155,26 @@ The Flow integration is what we're specifically interested in though. Here we ca
   }
 ```
 
-As we said before, we have defined the shape that the Reducer function must return, and with Nuclide, we can see our mistakes happening in real-time:
+之前我们提到，我们会对返回类型进行强制检查。在 Nuclide 中，当错误发生时，我们可以实时地看到：
 
 <video width="1174" height="1002" autoplay loop>
   <source src="static/videos/flow.mp4" type="video/mp4">
   Your browser does not support the HTML5 video tag.
 </video>
 
-If we leave out any part of the State type, something that could happen accidentally but frequently when rapidly building an app, we get instant feedback that we aren't returning the correct type of object.
+在快速开发 app 的过程中，我们可能会不小心地，却又经常地遗漏掉 State 类型的某个部分，现在我们可以及时地得到反馈。
 
-Nuclide will do this for all of our relevant Flow type-checking. This means, instead of waiting until the app is nearly completely built, type errors are spotted, and mistakes corrected, as the code is being written.
+Nuclide 会执行所有的类型检查，我们在写代码的时候，我们就可以发现这些错误并及时更正，而不是等到开发接近完成时，这些错误才暴露出来。
 
-It might seem unintuitive, but this actually sped up development - unravelling un-typed code can be really difficult, and doing it all when you've already built your app can be messy.
+这也许并不直观，但这确实提高了开发速度。要想发现没有写的，被遗漏的代码，相当困难。在 app 都接近开发完成时，面对一大堆代码，这变得更加麻烦。
 
-### Jest: Unit Testing for Bug-Free Changes
+### Jest: 单元测试
 
-[Jest](http://facebook.github.io/jest/) provides a unit test framework for JavaScript, and works well with [React Native apps](http://facebook.github.io/react-native/docs/testing.html#content).
+[Jest](http://facebook.github.io/jest/) 是针对 JavaScript 的一套测试框架，用它来做 [React Native 的测试](http://facebook.github.io/react-native/docs/testing.html#content) 效果不错。
 
-We are using these unit tests to ensure that already built, functional code isn't modified in a way that introduces bugs (also called regression testing).
+我们用这些单元测试来做回归测试，确保已经完成的功能性代码，不会引入新的 bug。
 
-For example, we want to have a Jest test that ensures the Reducer handling maps data continued to work as expected:
+比如我们想用一个单元测试来保证 Reducer 能够正确地处理地图数据：
 
 ```js
 jest.autoMockOff();
@@ -206,25 +210,29 @@ describe('maps reducer', () => {
 });
 ```
 
-Jest is really easy to read (note that even our Jest tests are Flow typed!), but we'll break it down. At line 4 we're including the maps Reducer function (`js/reducers/maps.js`) so that it can be used directly in the unit test (Reducer functions being [pure functions](https://en.wikipedia.org/wiki/Pure_function) means this is easily done).
+Jest 简单易读，但我们还是会做进一步的分解。
 
-The first test at line 8 is then ensuring that the Reducer function returns an empty array. If you look at the Reducer code itself in `js/reducers/maps.js` you'll see that it doesn't have any initial state, which is why we want an empty array from the unit test.
+在第 4 行，我们引入了地图的 Reducer 函数 `js/reducers/maps.js`，以便我们可以在单元测试中用到。因为 Reducer 函数是 [pure functions](https://en.wikipedia.org/wiki/Pure_function)，所以很容易进行测试。
 
-The second test at line 12 is ensuring that when the map data is retrieved from the Parse API it is correctly transformed by the Reducer function into the correct structure for the `state` tree. In this test we are using mock data objects that fully mimic the structure of the actual Parse-stored data - this would avoid any API connection issues causing this test to fail.
+第 8 行的测试代码，确保返回一个空数组。因为在 `js/reducers/maps.js` 我们没有定义初始的 `state`，所以返回一个空数组就好了。
 
-Now we have to make running the Jest tests part of our development workflow - for example, before every Git commit - and we can be more confident that changes to existing code won't silently break the app.
+第 12 行，我们用假数据来替换 API 返回的数据来进行测试，确保数据可以被 Reducer 转换成正确的 `state` 结构。这可避免因为 API 的网络原因导致测试失败。
 
-The fact that Redux Reducers mutate the `state` tree in our app makes it absolutely vital that bugs aren't introduced, especially as bugs with `state` mutation could easily be missed as they might not break anything functionally, instead just sending the wrong data to our Parse Server. Their pure function nature also makes them ideal candidates for regression testing because we can more accurately predict how they should perform every time.
+现在我们已经把单元测试变为开发流程中的一部分了，比如我们会在 Git 提交前做检查。这样我们就可以保证我们的代码变更不会使得 app 默默地就挂掉了。
 
-### Debugging
+只有 Redux Reducer 改变 `state` 树对于没有 bug 被引入是至关重要的。即使有，关于 `state` 改变的 bug 也不会导致功能不可用，仅仅是错误的数据被发送到 Parse Server 罢了。
 
-When you're trying to locate a bug, or find a fix for one, it's helpful to have some debugging tools on hand. We've already described [how we built a system for debugging our app's visual elements]({{ site.baseurl }}/tutorials/building-the-f8-app/design/#the-design-iteration-cycle), but what about the data?
+Reducer 的 pure function 性质，使得他们成为回归测试的理想对象，因为每次我们都可以预知他们的返回值。
 
-We're using the [Chrome Developer Tools](https://facebook.github.io/react-native/docs/debugging.html#chrome-developer-tools) through [Nuclide](http://nuclide.io/docs/features/debugger/) along with the [Redux Logger](http://fcomb.github.io/redux-logger/) middleware, which provides the console with additional Redux context such as Actions or `state` changes in Reducers:
+### 调试
+
+如果你想定位或者修复一个 bug，如果手边有些工具可用的话，那就最好了。上一章节，我们提到 [如果调整 UI 元素]({{ site.baseurl }}/tutorials/building-the-f8-app/design/#the-design-iteration-cycle)，那么对于数据呢？
+
+我们使用 [Chrome 的开发者工具](https://facebook.github.io/react-native/docs/debugging.html#chrome-developer-tools) 通过 [Nuclide](http://nuclide.io/docs/features/debugger/) 和 [Redux Logger](http://fcomb.github.io/redux-logger/) middleware 在控制台查看信息。
 
 ![Redux Logger Middleware in action with additional console context](static/images/redux_logger.png)
 
-You can see how we enable this via our `configureStore` function:
+在 `configureStore` 中，你可以看到我们是如果设置的：
 
 ```js
 /* from js/store/configureStore.js */
@@ -249,8 +257,8 @@ function configureStore(onComplete: ?() => void) {
 }
 ```
 
-At line 5 we're creating the Logger middleware [with some options](https://github.com/fcomb/redux-logger#options-1) and then at line 10 we're applying it using Redux's [`applyMiddleware()` function](http://redux.js.org/docs/api/applyMiddleware.html). This is all we need to do in order to see those logging entries show up in the console.
+第 5 行，我们使用 [一些选项](https://github.com/fcomb/redux-logger#options-1) 创建了 Logger middleware。 在第 10 行，我们通过 Redux 的 [`applyMiddleware()` 函数](http://redux.js.org/docs/api/applyMiddleware.html) 作用到了 Store 上。这样控制台就会有日志输出了。
 
-At line 4 we're triggering extra debugging functionality by using a [global variable](http://www.w3schools.com/js/js_scope.asp) called `__DEV__` that'll let us switch into and out of debugging mode with a simple boolean change. Not only does this determine whether the created logger middleware actually logs actions (using the [`predicate` option](https://github.com/fcomb/redux-logger#predicate--getstate-function-action-object--boolean)), but also at line 17 it adds a copy of the current Store object to the [Window object](http://www.w3schools.com/jsref/obj_window.asp). This just saves having to add it to the Window everytime, which in turn makes it easier to browse directly via the console.
+在第 4 行，我们使用一个 [全局变量](http://www.w3schools.com/js/js_scope.asp) `__DEV__` 来控制是否开启一些调试功能。比如创建 Logger middleware，并开启[`predicate（断言）` 选项](https://github.com/fcomb/redux-logger#predicate--getstate-function-action-object--boolean)) 来记录日志；比如 17 行，将 Store 拷贝到 [Window object](http://www.w3schools.com/jsref/obj_window.asp)，这样就可以在控制台方便地直接查看 Store 对象了。
 
 
