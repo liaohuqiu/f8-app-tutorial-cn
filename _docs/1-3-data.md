@@ -74,7 +74,7 @@ Flux 扩充了 React 中的数据流程。它引入了 Store 这个概念：Stor
 
 那么我们真正使用的框架，Redux 和 Flux 又是怎样一个关系呢？
 
-### 从 Flux 到 Redux
+<h3 id='flux-to-redux'>从Flux 到 Redux</h3>
 
 Redux 是一个实现了 Flux 架构，但又从 Flux 中剥离的框架。[react-redux 包提供的官方的数据绑定实现](https://github.com/reactjs/react-redux) 使得和 React 的集成变得很简单。
 
@@ -85,7 +85,7 @@ Redux 中没有 Dispatcher，并且对于整个 app 的 `state`，只有一个 S
 * React 可以触发 Action，比如按钮点击按钮。
 * Action 是对象，包含一个类型以及相关的数据，通过 Store 的 `dispatch()` 函数发送到 Store。
 * Store 接收 Action 的数据并将其连同当前的 `state` 树（[`state` 树](https://egghead.io/lessons/javascript-redux-the-single-immutable-state-tree) 是包含所有 `state` 的一种特殊的数据结构，是一个单一的对象）发给 **Reducer**。
-* **Reducer** 是一个 [纯 function](http://redux.js.org/docs/basics/Reducers.html#handling-actions)，它接收一个之前的 `state` 和一个 Action；并基于此 Action 将会产生的影响，返回一个新的 `state`。一个 app 可以包含一个 Reducer，但大部分的 app 最后会包含多个，每个处理 `state` 中不同的部分，[下文](#reducers) 会提到。
+* **Reducer** 是一个 [pure function](http://redux.js.org/docs/basics/Reducers.html#handling-actions)，它接收一个之前的 `state` 和一个 Action；并基于此 Action 将会产生的影响，返回一个新的 `state`。一个 app 可以包含一个 Reducer，但大部分的 app 最后会包含多个，每个处理 `state` 中不同的部分，[下文](#reducers) 会提到。
 * Store 接收到新的 `state`，并替换当前的。
 * 当 `state` 变化时，Store 触发 [事件](http://redux.js.org/docs/api/Store.html#subscribe)。
 * 任何 [订阅了事件](http://redux.js.org/docs/api/Store.html#subscribe) 的组件 [从 Store 中提取新的 `state`](http://redux.js.org/docs/api/Store.html#getState)。
@@ -111,17 +111,21 @@ Redux 中没有 Dispatcher，并且对于整个 app 的 `state`，只有一个 S
 
 ### Putting This Together
 
-So now that we've talked about the data flow in the abstract, let's look at how our React Native app puts it all to use, and anything we learned along the way.
+我们已经抽象地谈到了数据流，现在让我们看看我们的 app 中是如何运用的，以及我们从中学到的什么。
 
 #### Store
 
-The [Redux docs](http://redux.js.org/docs/basics/Store.html) explain very well how to create a simple Store, so we're going to assume you've read the basics there and skip ahead a little bit, including a few extras with our Store.
+[Redux 的文档](http://redux.js.org/docs/basics/Store.html) 很好地解释了如何创建一个简单的 Store，我们假设对文档所说的这些基础部分，你已经游刃有余。
 
-##### Offline Syncing of Store
+##### Store 的离线同步
 
-We've talked before about needing local offline storage of the data, so that the app can operate in low-signal or no-signal conditions (vital at a tech conference!). Luckily, because we're using Redux, there's a very simple module we can use with our app called [Redux Persist](https://www.npmjs.com/package/redux-persist).
+We've talked before about needing local offline storage of the data, so that the app can operate in low-signal or no-signal conditions (vital at a tech conference!). Luckily, because we're using Redux, there's a very simple module we can use with our app called 
 
-We're also using something called [**Middleware**](http://redux.js.org/docs/advanced/Middleware.html) with our Store - we'll talk more about some of the things we use this for in the testing section, but basically, middleware allows you to fit extra logic in between the point of an Action being dispatched, and when it reaches the Reducer (this is useful for things like logging, crash reporting, asynchronous APIs, etc.).
+前面我们提到，为了我们的 app 能在没有网络或者网络条件不好的情况下工作，我们需要离线的本地存储。幸好，我们使用 Redux，有一个非常简单 module 可以用在我们的 app 中：[Redux 的持久化](https://www.npmjs.com/package/redux-persist)。
+
+配合我们的 Store，我们也用到了 [**Middleware**](http://redux.js.org/docs/advanced/Middleware.html)，这点我们在后面的 [测试相关的章节][testing] 会更具体地提到。通过 middleware，我们可以在 Action 被分发到 Reducer 之前，加入一些处理逻辑，比如：日志，crash 报告，调用异步 API，等等。
+
+我们实际的代码如下；
 
 ```js
 /* js/store/configureStore.js */
@@ -135,7 +139,7 @@ function configureStore(onComplete: ?() => void) {
 }
 ```
 
-The nested function syntax might be a little confusing here (some of these functions *return* functions that take *another* function as an argument), so here it is expanded a bit:
+上面的代码也许有些难懂，我们展开看看：
 
 ```js
 /* js/store/configureStore.js */
@@ -152,29 +156,36 @@ function configureStore(onComplete: ?() => void) {
 }
 ```
 
-We activate the middleware at line 3 using Redux's `applyMiddleware()` function (if you want to know more, read the [Redux `applyMiddleware` docs](http://redux.js.org/docs/api/applyMiddleware.html)) which itself *returns a function* that will 'enhance' the Store object.
+1. 第 3 行，`applyMiddleware()` 返回一个函数，这个函数我们将会作用于我们的 Store 对象。关于 `applyMiddleware()`，你可以通过
+[Redux `applyMiddleware` 相关的文档](http://redux.js.org/docs/api/applyMiddleware.html)) 了解更多的信息。
 
-So we wrap Redux's [`createStore()`](http://redux.js.org/docs/api/createStore.html) function (with all the Reducers in our app as an argument) in that enhancer function at line 4. `createStore()` returns a Store object for our app, `middlewareWrapper()` 'enhances' it with the middleware, and the resulting enhanced Store object is saved in `createF8Store`.
+2. 第 4 行，`reducers` 是 app 中的所有 Reducer，[`createStore()`](http://redux.js.org/docs/api/createStore.html) 接收这个参数进行处理，返回一个 Store 对象，这个对象交给 Middleware 处理，返回值我们记为 `createF8Store`。
 
-Then we configure our Store object a little bit. [Persist's `autoRehydrate()`](https://github.com/rt2zz/redux-persist#autorehydrate) is another Store enhancer function (as with `applyMiddleware()` this returns a function), and we pass it our existing Store object (at line 8). This `autoRehydrate()` takes a Store object previously saved to local storage and automatically updates the current Store with it's `state`.
+3. 和 `applyMiddleware()` 相似， [Persist 的 `autoRehydrate()`](https://github.com/rt2zz/redux-persist#autorehydrate) 它将返回一个可作用于 Store 的函数，我们记为：`rehydrator`。`rehydrator` 作用于我们的 `Store`，可将之前存储于本地的 Store 对象用当前的 Store 的 `state` 进行自动更新。
 
-The [Persist package's `persistStore()`](https://github.com/rt2zz/redux-persist#persiststorestore-config-callback) at line 9 (which we configure to use [React Native's built-in AsyncStorage system](https://facebook.github.io/react-native/docs/asyncstorage.html)) is the function that actually takes care of saving the app's Store to local storage. This simple bit of `autoRehydrate()` and `persistStore()` code is all we need to enable offline sync in our app.
+4. 第 9 行，[Persist 包中的 `persistStore()` 函数](https://github.com/rt2zz/redux-persist#persiststorestore-config-callback) 处理 Store 保存到本地存储相关的逻辑。这其中，我们配置使用了 [React Native 内置的异步存储系统](https://facebook.github.io/react-native/docs/asyncstorage.html))。`autoRehydrate()` 和 `persistStore()` 实际就是我们用来实现离线数据同步的所有代码了。
 
-Now, whenever the app loses Internet connectivity, the most recent copy of the Store (including any Parse data we had to grab via the API) will still be there waiting in local storage, and from the user's perspective, the app will just work.
+现在，没有网络连接的时候，之前的 Store 对象还在本地存储中，从用户的角度来看，app 还是可用的。
 
-For more information, you can read about the [technical details of how the Redux Persist package works](https://www.npmjs.com/package/redux-persist#basic-usage), but essentially we're done creating our Store.
+目前位置，我们的 Store 基本上算处理完了。如果你想了解更多，你可以看看： [Redux 持久化实现的技术细节](https://www.npmjs.com/package/redux-persist#basic-usage)。
 
 ### Reducers
 
-In the [previous explanation of Redux](#flux-to-redux), we mentioned that it introduced a Reducer object. However in each app there can be multiple Reducers, which are concerned with different parts of the `state`. As a basic example, in a commenting app you might have a reducer related to login status, and others related to the actual comment data.
+在 [前面关于 Redux 的阐释中](#flux-to-redux)，我们提到 Redux 引入了一个 Reducer 对象。一个 app 可以有多个 Reducer，每个关注 `state` 的不同部分。比如：在一个带评论的 app 中，有一个 Reducer 处理登录相关的状态，另外一个 Reducer 处理评论数据。
 
-In our F8 app, we store our reducers in `js/reducers/`. Here's a condensed look at `user.js`:
+在 F8 app 中，所有的 Reducer 的源码都在 `js/reducers/` 目录下，这里我们简要地看看 `user.js`：
 
 ```js
 /* js/reducers/user.js */
-...
 import type {Action} from '../actions/types';
-...
+
+export type State = {
+  isLoggedIn: boolean;
+  hasSkippedLogin: boolean;
+  sharedSchedule: ?boolean;
+  id: ?string;
+  name: ?string;
+};
 
 const initialState = {
   isLoggedIn: false,
@@ -187,6 +198,9 @@ const initialState = {
 function user(state: State = initialState, action: Action): State {
   if (action.type === 'LOGGED_IN') {
     let {id, name, sharedSchedule} = action.data;
+    if (sharedSchedule === undefined) {
+      sharedSchedule = null;
+    }
     return {
       isLoggedIn: true,
       hasSkippedLogin: false,
@@ -213,39 +227,44 @@ function user(state: State = initialState, action: Action): State {
       sharedSchedule: action.enabled,
     };
   }
+  if (action.type === 'RESET_NUXES') {
+    return {...state, sharedSchedule: null};
+  }
   return state;
 }
 
 module.exports = user;
 ```
 
-As you might be able to tell, this reducer is involved with login/logout operations, as well as user specific option changes. Let's go through it piece by piece.
+正如你所见，这个 Reducer 处理 login/logout 以及用户具体选项改变相关的逻辑。下面我们一部分一部分地来看。
 
-> Note: we're using ES2015's [destructuring assignment](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) at line 16 which assigns each of the left side variables to each of the pieces of the data in the list in `action.data`.
+> 注意， 22 行我们使用了 ES2015  [destructuring assignment](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) 把 `action.data` 中对应 key 为左边变量名的值，赋值给了左边的变量。
 
-##### 1. Initial State
+##### 1. 初始状态
 
-At the beginning we define the initial state (line 6), which conforms to a [Flow Type Alias](http://flowtype.org/docs/type-aliases.html) (we'll explain more about these in [Testing a React Native app]({{ site.baseurl }}/tutorials/building-the-f8-app/testing/)). This `initialState` defines the values - for the part of the `state` tree that this Reducer handles - that the app will have on first load, or before any previously synced Store is 'rehydrated' as above.
+最开始，我们在第 12 行，依照 [Flow 的类型别名规范](http://flowtype.org/docs/type-aliases.html) （[测试相关的章节][testing] 详谈），我们定义了初始状态。 `initialState` 定义的值，会在 app 一启动就加载。
 
-##### 2. The Reducer Function
+##### 2. Reducer 函数
 
-Then, we write the meat of the Reducer (lines 14-50), and it is actually relatively simple. `state` and an Action (which we will [discuss below](#actions)) are taken as arguments, with the `initialState` as a default for `state` (and we're using [Flow type annotations](http://flowtype.org/docs/type-annotations.html#_) for the arguments here, again something we'll cover in [Testing a React Native app]({{ site.baseurl }}/tutorials/building-the-f8-app/testing/)). Then, we use the received Action, specifically whatever 'type' label it had, and return a new, changed `state`.
+从 20 到 56 行是 Reducer 的具体实现部分，实际也是相对简单的。函数接受 `state` 和 Action 作为参数，`state` 的默认值是 `initialState`。根据 Action 具体的 `type`，改变 `state`，返回一个新的 `state`。
 
-For example, if the `LOGGED_OUT` Action (at line 37) was dispatched (because the user clicked a log-out button), we reset this part of the `state` tree to `initialState`. If the `LOGGED_IN` Action (at line 15) type happens, you can see that the app will use the rest of the data payload, and return a new `state` that reflects both standard changes like `isLoggedIn`, but changes that come from user-inputted data, such as `name`.
+以 43 行的 `LOGGED_OUT` 这个 Action 为例，我们把 `state` 重置为 `initialState`；而在 21 行，对于 `LOGGED_IN`，使用了 `action.data` 中 `id, name, sharedSchedule` 等用户输入的值，构造了一个新的 `state` 并返回。
 
-There's one more we'll look at, and that's the `SET_SHARING` Action type (at line 40). It is interesting because of the `...state` notation being used. This is a more compact and readable alternative to [`Object.assign()`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign) that is part of the [Javascript syntax transformers included in React](https://facebook.github.io/react-native/docs/javascript-environment.html#javascript-syntax-transformers) (called the [Object Spread Operator](http://redux.js.org/docs/recipes/UsingObjectSpreadOperator.html)), and all it really does in this case is create an object that copies the existing `state`, and updates the `sharedSchedule` value.
+现在让我们看看 46 行的 `SET_SHARING`，这里有一个 `...state`。  这个语法糖其实就是 [`Object.assign()`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign) ，但更紧凑和可读一些。这是 [React 所包含的 Javascript 语法转换](https://facebook.github.io/react-native/docs/javascript-environment.html#javascript-syntax-transformers) 的一部分，称为 [Object Spread Operator（对象扩散操作符）](http://redux.js.org/docs/recipes/UsingObjectSpreadOperator.html))。这里将 `state` 做了一个复制，然后更新 `sharedSchedule` 的值并返回。
 
-You can see how simple and readable this Reducer structure is - define an `initialState`, build a function that takes a `state` and an Action, and returns a new `state`. That's it.
+你可以看到 Reducer 的结构是多么简单，可读性很强。定义个 `initialState`，提供一个函数，处理 `state` 和 Action，返回一个新的 `state`，就是这样。
 
-We don't do anything else in this function because of the one big rule with reducers, and we'll quote the [Redux docs](http://redux.js.org/docs/basics/Reducers.html#handling-actions) verbatim:
+在这个函数中，我们不做其他的任何事情，Reducer 的一个至为重要的规则就是，函数应该是 `pure function`，即对于一样的参数，一定会有同样的返回值。
+
+[Redux 的文档](http://redux.js.org/docs/basics/Reducers.html#handling-actions) 的原话是：
 
 >"Remember that the reducer must be pure. Given the same arguments, it should calculate the next state and return it. No surprises. No side effects. No API calls. No mutations. Just a calculation."
 
-One other thing to take notice of: looking at `js/reducers/notifications.js` there's another reference to the `LOGGED_OUT` action type; we mentioned this before, but it bears repeating - each reducer is always called after an Action is dispatched, so multiple reducers may be updating different parts of the `state` tree based on the same Action.
+另外，我们再看看 `js/reducers/notifications.js`，这里也有对 `LOGGED_OUT` 这个 Action 进行的处理。每个 Reducer 在 Action 被派发后都会被调用，每个 Reducer 只处理自己关心的 `state` 树种的那部分 `state`。
 
 ### Actions
 
-Let's have a closer look at a login-related Action, and see where it sits in the code:
+现在让我们看看 login 相关的 Action：
 
 ```js
 /* from js/actions/login.js */
@@ -256,9 +275,9 @@ function skipLogin(): Action {
 }
 ```
 
-This is a really simple **Action creator** (the object returned by this creator function is the actual Action), but it lets you see the basic structure - each Action can simply be an object containing a custom `type` label. The reducers can then use this `type` to perform the `state` updates.
+这个是一个非常简单的 **Action creator**，该函数返回的结果是一个真正的 Action。每个 Action 可以只包含一个 `type`，Reducer 根据这个 `type` 更新 `state`。
 
-We can also include some data payload along with the `type`:
+和 `type` 一起，Action 还可以携带一些数据，如：
 
 ```js
 /* from js/actions/filter.js */
@@ -270,9 +289,9 @@ function applyTopicsFilter(topics): Action {
 }
 ```
 
-The Action creator here receives an argument and inserts it into the Action object.
+这里 **Action creator**，接收一个参数并将其插入到 Action 中。
 
-We then have some Action creators that perform additional logic as well as returning the Action object. In this example, we're also using a custom Action derivative called a ThunkAction ([Redux recommends you create something like this to reduce boilerplate](http://redux.js.org/docs/recipes/ReducingBoilerplate.html)) - this special type of Action creator returns a function not an Action. In this case the `logOut()` Action creator returns a function which performs some logout related logic, and then dispatches an Action.
+有些 Action creator 会先执行一些逻辑，他们会返回一个函数而不是一个 Action：
 
 ```js
 /* from js/actions/login.js */
@@ -289,11 +308,13 @@ function logOut(): ThunkAction {
 }
 ```
 
-(Note we're also using the [Arrow function syntax](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions) in this example)
+在这个例子中，我们使用了一个自定义的 ThunkAction（[Redux 建议这样做以减少重复定义](http://redux.js.org/docs/recipes/ReducingBoilerplate.html)），这个 Action creator 返回的函数，执行了 logout 相关的逻辑，然后分发了一个 Action。
 
-##### Async Actions
+注意：这里我们使用了 `=>` [Arrow function syntax（箭头函数语法）](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions)。
 
-If, for example, you're interacting with any APIs, you'll need some asynchronous Action creators. Redux on its own has [a fairly complex approach to async](http://redux.js.org/docs/advanced/AsyncActions.html), but because we're using React Native, we have access to [ES7 `await` functionality](https://facebook.github.io/react-native/docs/javascript-environment.html#javascript-syntax-transformers) which simplifies the process:
+##### 异步 Action
+
+如果我们和 API 交互，我们需要异步的 Action creators。. Redux 本身有一个 [相当复杂的异步方式](http://redux.js.org/docs/advanced/AsyncActions.html)。不过我们使用的是 React Native，我们可以使用 [ES7 的 `await`](https://facebook.github.io/react-native/docs/javascript-environment.html#javascript-syntax-transformers)，这会使得整个流程大大简化：
 
 ```js
 /* from js/actions/config.js */
@@ -306,18 +327,18 @@ async function loadConfig(): Promise<Action> {
 }
 ```
 
-Here, we're making an API call to Parse to grab some app configuration data. Any API call to a web resource like this will take a certain amount of time. Instead of the Action being immediately dispatched, the action creator first waits for the result of API call (without blocking the JavaScript thread), and then once that data is available, then the Action object (with the API data in the payload) is returned.
+这里，我们调用了一个 API，获取一些配置数据。任何网络 API 的调用都是一个耗时的操作。Action creator 等待结果返回，然后再返回一个 Action。这过程没有阻塞 JavaScript 线程。
 
-One of the benefits of asynchronous calls like this is that while we await the result of the `Parse.Config` call, other async operations can be doing work, so we can bucket a lot of operations together and automatically improved their efficiency.
+这样的异步调用的好处就是，我们在等待 `Parse.Config` 返回的时候，其他异步的操作也可以同时进行。我们可以执行一系列的并发操作，而不必相互等待，以提高效率。
 
-### Binding to Components
+### 组件绑定
 
-Now, we connect our Redux logic to React inside of our app's setup function:
+现在我们在我们 app 的 `setup()` 函数中把 Redux 的逻辑和 React 连接起来：
 
 ```js
 /* from js/setup.js */
 function setup(): React.Component {
-  // ... other setup logic
+  // ... 其他的设置逻辑
 
   class Root extends React.Component {
     constructor() {
@@ -339,12 +360,12 @@ function setup(): React.Component {
 }
 ```
 
-We're using the official [React and Redux bindings](https://github.com/reactjs/react-redux), so we can use the built in [`<Provider>` component](http://redux.js.org/docs/basics/UsageWithReact.html#passing-the-store) (shown at line 18 above). This Provider lets us connect the Store that we've created to any components that we want:
+我们使用官方的 [React 和 Redux 之间的绑定](https://github.com/reactjs/react-redux)，所以在第 18 行，我们可以使用内置的 [`<Provider>` 组件](http://redux.js.org/docs/basics/UsageWithReact.html#passing-the-store)。 Provider 可以把我们创建的 Store 和任意组件连接。
 
 ```js
 /* from js/F8App.js */
 var F8App = React.createClass({
-  ...
+  // 省略部分代码
 })
 
 function select(state) {
@@ -357,37 +378,43 @@ function select(state) {
 module.exports = connect(select)(F8App);
 ```
 
-Above we are showing a section of code from the `<F8App>` component - the parent component of our entire app.
+上面的代码就是我们 app 的根容器组件 `<F8App>`。
 
-The function at line 6 above is used to take the Redux Store, then take some data from it, and insert it into the `props` for our `<F8App>` component. In this case, we want data about notifications and the login status of the user to be `props` in that component, and for them to be kept up to date with any Store changes.
+在 13 行，我们使用了 React-Redux [`connect()` 函数](https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options)。`connect()` 函数的参数列表中的第一个参数名为 [`mapStateToProps`](https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments) 这个参数是一个函数，当 Store 更新时，这个函数就会被调用。
 
-We can use the React-Redux [`connect()` function](https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options) to accomplish this - `connect()` has an argument named [`mapStateToProps`](https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments) which takes another function and any time there is a Store update, that function will be called.
+这里，我们传入的是第 6 行的 `select` 函数。这个函数传入的参数是 Store 中的 `state`，我们从这个 `state` 中提取数据，返回的数据会传入大到 `<F8App>` 中去。在这里，我们提取了通知消息相关的数据和登录状态相关的数据。
 
-So when our app's Store updates, `select()` (at line 6 above) will be called, with the new `state` supplied as an argument. `select()` returns an object containing the data (in this case `notifications` and `isLoggedIn`) we want from this new `state`, then the `connect()` call at line 13 merges this data into the `props` for the `<F8App>` component:
+当 Store 中的数据变化时，`connect()` 函数被调用，我们提取的数据会被传入到 `<F8App>` 组件中。
 
 ```js
 /* from js/F8App.js */
 var F8App = React.createClass({
   ...
   componentDidMount: function() {
-    ...
+    // 省略代码
     if (this.props.notifications.enabled && !this.props.notifications.registered) {
-      ...
+        // 省略代码
     }
-    ...
+    // 省略代码
   },
-  ...
+  // 省略代码
 })
 ```
 
-We now have an `<F8App>` component that will be updated with any new `state` data that it has subscribed to through the `select()` function, which it can access through its own props (as shown at line 6 above). But how to we dispatch Actions from a component?
+现在，`<F8App>` 中第 6 行，我们可以得到最新的数据了，另外数据更新时，`render()` 方法也会被重新调用。下面我们看看如何在组件内触发一个 Action。
 
-##### Dispatching Actions from Components
+##### 组件内触发 Action
 
-To see how we can connect Actions to components, let's take a look at the relevant parts of `<GeneralScheduleView>`:
+为了看清 Action 和组件是如何连接起来的，我们可以看看 `<GeneralScheduleView>` ，组件看起来像这样，可以切换 DAY 1， DAY 2，DAY 3。
+
+![Screenshot of segmented controls]({{ site.baseurl }}/static/images/iOS vs Android Segmented Controls@3x.png)
+
+主要代码如下：
 
 ```js
 /* from js/tabs/schedule/GeneralScheduleView.js */
+var {switchDay} = require('../../actions');
+
 class GeneralScheduleView extends React.Component {
   props: Props;
 
@@ -435,38 +462,26 @@ class GeneralScheduleView extends React.Component {
   }
 }
 
-module.exports = GeneralScheduleView;
-```
-
-Again, this code has been heavily simplified for ease of learning, but we can now add and change some code at line 48 to connect this [container component](#containercomponents) to the Redux store:
-
-```js
-/* from js/tabs/schedule/GeneralScheduleView.js */
-function select(store) {
+function select(state) {
   return {
-    day: store.navigation.day,
-    data: data(store),
+    day: state.navigation.day,
+    filter: state.filter,
+    sessions: data(state),
   };
 }
 
-function actions(dispatch) {
+function mapDispatchToProps(dispatch) {
   return {
     switchDay: (day) => dispatch(switchDay(day)),
-  }
+  };
 }
 
-module.exports = connect(select, actions)(GeneralScheduleView);
+module.exports = connect(select, mapDispatchToProps)(GeneralScheduleView);
 ```
 
-There's a difference this time - we provide the React-Redux [`connect()` function](https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options's optional argument, [`mapDispatchToProps`](https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments). Basically, doing this merges the action creators inside `actions()` into the component's props, while wrapping them in `dispatch()` so that they immediately dispatch an Action.
+为了说明问题，我们省略了部分细节。
 
-##### How it Works
-
-Let's see the actual component:
-
-![Screenshot of segmented controls]({{ site.baseurl }}/static/images/iOS vs Android Segmented Controls@3x.png)
-
-Tapping on 'Day 1' here would trigger the `onChange` event in `renderStickyHeader()`, then the `switchDay()` function inside the component is called, and that function itself dispatches the `this.props.switchDay()` action creator. Inside one of our Actions files we can see this action creator:
+在第 2 行，我们引入了 `switchDay()` 函数，这个函数实际在 `js/actions/navigation.js` 中：
 
 ```js
 /* from js/actions/navigation.js */
@@ -476,7 +491,15 @@ Tapping on 'Day 1' here would trigger the `onChange` event in `renderStickyHeade
   })
 ```
 
+这个 Action creator 简单返回一个 Action 对象，带上了 `day` 这个变量。
+
+在 65 行，我们同样使用了 `connect()`，不过稍有不同的是，第二个参数，我们传入了一个函数 [`mapDispatchToProps`](https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments)。
+
+当点击 "DAY 1" 的时候，`renderStickyHeader()` 中的 `onChange()` 会被触发，第 46 行的 `switchDay` 被调用，`props` 的 `switchDay` 被 `mapDispatchToProps` 映射到了 61 行的函数上。这个函数分发第 2 行引入的 `switchDay()` 返回的 Action。
+
 And inside the navigation Reducer we can see that this generates a new `state` tree with a modified `day` value:
+
+在 Reducer 中，将修改过后的时间值 `dqy` 更新到 `state` 中：
 
 ```js
 /* from js/reducers/navigation.js */
@@ -485,13 +508,11 @@ And inside the navigation Reducer we can see that this generates a new `state` t
   }
 ```
 
-The Reducer (and any other Reducers that might be watching for `SWITCH_DAY` Actions) returns the new `state` back to the Store, which updates itself and sends out a change event.
+因为 `<GeneralScheduleView>` 订阅了 `state`，一旦 `state` 发生变化，组件就更新了。
 
-And because by connecting `<GeneralScheduleView>` to the Redux Store we also subscribed it to changes to the `state` in that Store, the component will now update with the newly changed `day` value, displaying 'Day 1' schedules.
+### Parse Server
 
-### What about Parse Server?
-
-You've hopefully consumed a lot of new information by now in this tutorial, but let's quickly show how we can connect our React Native app to our Parse Server data backend, and its relevant API:
+教程直接到目前为止，相信你已经得到不少新的信息了。现在，再让我们来看看 React Native 和 Parse Server 是如何连接的：
 
 ```js
   Parse.initialize(
@@ -502,11 +523,11 @@ You've hopefully consumed a lot of new information by now in this tutorial, but 
 
 That's it, we're connected to the Parse API inside React Native.
 
-Yep, because we're using the [Parse + React](https://github.com/ParsePlatform/ParseReact) SDK (specifically the `parse/react-native` package in it), we have incredibly simple SDK access baked right in.
+是的，由于我们使用了 [Parse + React](https://github.com/ParsePlatform/ParseReact) SDK （在 `parse/react-native` 包中），整个过程就是这么简单。
 
-##### Parse and Actions
+##### Parse 和 Action
 
-Of course, we want to be able to also make queries (for example, inside our Actions)....a lot of queries. There's nothing special about these action creators; they are the same [Async Actions we mentioned before](#async-actions). However, because there are so many simple Parse API queries needed to initalise the app, we wanted to reduce boilerplate a bit. Inside our base Actions file, we created a base action creator:
+我们在各个 Action 中要做很多查询，这些 Action creator 几乎是一样的，为了减少重复代码，我们创建了一个 base Action creator：
 
 ```js
 /* from js/actions/parse.js */
@@ -520,18 +541,20 @@ function loadParseQuery(type: string, query: Parse.Query): ThunkAction {
 }
 ```
 
-And then we re-use this multiple times very simply:
+基于这个 base Action creator，我们创建具体的 Action creator：
 
 ```js
   loadMaps: (): ThunkAction =>
     loadParseQuery('LOADED_MAPS', new Parse.Query(Maps)),
 ```
 
-`loadMaps()` becomes an action creator that'll run a simple Parse Query for all the stored Map data, and pass it along - when the query is complete - inside of the Action payload. `loadMaps()` and a load of other Parse data Actions can be found being dispatched in the `componentDidMount()` function of the entire app (`js/F8App.js`), which means the app fetches all Parse data which it is first loaded.
+`loadMaps()` 成了一个 Action creator，这个 creator 简单地运行一个 Parse Query，加载完所有的地图数据之后将数据分发。
 
-##### Parse and Reducers
+在 `js/F8App.js` 中的 `componentDidMount()` 中你可以看到 app 中的所有 Parse 和 Action。这也就是说，在应用第一次运行的时候所有 Parse 的数据就加载进来了。
 
-We've cut down repetition in our Actions, but we want to reduce this boilerplate inside our Reducers too. These will receive a bunch of Parse API data from the Action payloads and have to map them to the `state` tree. We create a single base Reducer for Parse data:
+##### Parse 和 Reducer
+
+我们已经缩减了 Action 的代码冗余，现在我们也想缩减 Reducer 的代码冗余。这些 Reducer 会接收一系列来自于 Parse API 的数据，并把这些数据更新到 `state` 树中。我们也创建一个 base Reducer：
 
 ```js
 /* from js/reducers/createParseReducer.js */
@@ -549,7 +572,7 @@ function createParseReducer<T>(
 }
 ```
 
-This is a really simple Reducer (with lots of Flow type annotations thrown in), but let's see how it works with the child Reducers based off of it:
+这是一个很简单的 Reducer，当然，其中糅杂了很多 Flow 的类型注解，我们看看基于这个 base Reducer 派生出来的具体的 Reducer 是什么样的：
 
 ```js
 /* from js/reducers/faqs.js */
@@ -572,6 +595,8 @@ function fromParseObject(map: Object): FAQ {
 module.exports = createParseReducer('LOADED_FAQS', fromParseObject);
 ```
 
-So instead of repeating the `createParseReducer` portion of the code each time, we're simply passing an object to the base Reducer that maps the API data to the structure we want for our `state` tree.
+我们没有简单地重复 `createParseReducer` 中的代码，我们把一个映射 API 数据到 `state` 的函数传入到了其中，达到了缩减代码的目的。
 
-Now we have an app with a well-structured and easy to understand data flow, connection to our Parse server, and even offline syncing of our Store to local storage.
+好了，现在我们有一个结构良好，数据流简单易懂，和 Parse Server 串联起来了的 app 了。并且，我们还有了离线数据存储的支持。
+
+[testing]:          {{ site.baseurl }}/tutorials/building-the-f8-app/testing/
