@@ -1496,3 +1496,13 @@ blockquote {
 article {
   margin-bottom: 30px;
 }
+@media only screen and (max-width: 767px) {
+  h2 {
+    font-size: 13px;
+  }
+}
+@media only screen and (max-width: 320px) {
+  h2 {
+    font-size: 10px;
+  }
+}
