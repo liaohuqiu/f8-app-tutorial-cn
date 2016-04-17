@@ -8,9 +8,8 @@ layout: docs
 permalink: /tutorials/building-the-f8-app/windows/
 ---
 
-At F8 2016, Facebook announced that Microsoft is bringing [React Native to the Windows ecosystem](http://microsoft.github.io/code-push/articles/ReactNativeWindows.html), giving developers the potential to build React Native on Windows devices such as PCs, phones, and Xboxes.
+在 2016 的 F8 会议上，Facebook 提到 [微软正把 React Native 带入到 Windows 生态中](http://microsoft.github.io/code-push/articles/ReactNativeWindows.html)，这使得开发者在将来有可能使用 React Native 开发比如微软操作系统，Xboxes 之类的设备上的应用。
 
-Microsoft will also provide open source tools and services - such as a React Native extension for Visual Studio Code and the CodePush service - to help developers create React Native apps on the Universal Windows platform.
+为了让帮助开发者在 Windows 平台下开发 React Native 应用，微软也将会提供一些开源工具和服务，比如 Visual Studio Code 中的 React Native 扩展，或者 CodePush 相关的服务。
 
-Eric Rozell from Microsoft has [written a blog post](https://ericroz.wordpress.com/2016/04/11/f8-app-on-windows-10-mobile/) describing how they brought the F8 App [to Windows 10 Mobile](https://www.microsoft.com/en-us/store/apps/f8-developer-conference/9nblggh4ntvn).
-
+微软的 Eric Rozell [写了一篇文章](https://ericroz.wordpress.com/2016/04/11/f8-app-on-windows-10-mobile/) 描述了如何把 F8 app 移植到 [ Windows 10 Mobile](https://www.microsoft.com/en-us/store/apps/f8-developer-conference/9nblggh4ntvn) 上的，大家有兴趣可以看看。

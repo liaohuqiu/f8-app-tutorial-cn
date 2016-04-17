@@ -9,7 +9,7 @@ intro: >
   在这第一部分，我们将谈谈，我们是如何筹备这个 app 的，和进行技术选型的。
 ---
 
-*这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。* 
+> *这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。* 
 
 
 在第一部分，我们会谈谈我们是如何筹备这个 app 的，在后面的部分，我们会一起看一些代码片段，讨论我们跨平台设计的考虑，分析我们 app 的数据层，阐释我们单元测试的策略。
@@ -32,7 +32,7 @@ intro: >
 
 React Native 无需和数据层紧密关联，我们在实现 UI 界面和业务逻辑的时候，可以使用一些假数据。只要数据结构一样，紧要一些很小的调整就可以更换 app 的数据源。对于 F8 这个 app 来说，开发完之后，从 Parse Cloud Code 过渡到开源的 Parse Server 将会很简单，我们在 [数据集成章节]({{ site.baseurl }}/tutorials/building-the-f8-app/data/) 会详细说明。
 
-### React Native 的数据访问
+<h3 id='data-access-with-react-native'>React Native 的数据访问</h3>
 
 现在已经有一个包 [Parse + React](https://github.com/ParsePlatform/ParseReact) 可让 React Native 使用 Parse。但有一个问题就是，这个包不支持离线数据同步。而会场的 wi-fi 又极不稳定，app 必须能在无网络的条件下工作。所以我们必须要自己实现离线数据支持。
 

@@ -8,39 +8,37 @@ layout: docs
 permalink: /tutorials/building-the-f8-app/relay/
 ---
 
-When we originally planned the app [we discussed the choice of data layer](tutorials/building-the-f8-app/planning/#data-access-with-react-native) and compared [Redux](https://github.com/rackt/redux) (which was eventually used), with an alternative Facebook Open Source project called [Relay](https://facebook.github.io/relay/).
+在开始筹备这个 app，[考虑数据层的选择时](tutorials/building-the-f8-app/planning/#data-access-with-react-native)，我们对比了 [Redux](https://github.com/rackt/redux) 和 Facebook 的另一个开源框架 [Relay](https://facebook.github.io/relay/)，最后选择了前者。
 
-At the time, Redux was chosen because it offered the simpler data impementation of the two, and was quicker and easier to integrate with our Parse data storage.
+那时因为 Redux 的实现较为简单，和 Parse 的数据的集成也容易一些。现在，我们项目上线了发布了，我们想再回顾一下当时的选择，看看 Relay 能在我们的 app 中怎么用。
 
-Once the app was released to the iOS and Android app stores, we wanted to revisit that choice, and look at how Relay could work with our app.
+### 逐步地演变
 
-### Gradual Evolution
+传统的 app 开发，变换一个数据层的选择，通常会导致整个 app 的改动，
 
-With traditional native app development, the choice to switch the data layer would usually lead to a whole-scale rewrite of the entire app, where the existing functionality would be entirely swapped out.
+React Native 不太一样，我们可以保持现有的数据层实现：Redux， Parse，以及相关的绑定。然后在某个独立的 View 中，引入新的数据层。我们可以仅仅改动一部分，其他部分保持不动。
 
-React Native is very different - we can retain the majority of our existing data setup (Redux, Parse, and the relevant bindings) while also switching to a new data layer for an individual View. Instead of having to rebuild the app from scratch, or do a messy refactor, we can simply adjust one section of the app to use a new data layer and let the rest continue to use the existing layer.
+持续开发，持续改进，大大地减少维护和更新的开销，这些好处是值得大书特书的。
 
-It is worth stating just how huge a benefit this is to continued development of an app - the ability to progressively enhance an app reduces the overhead for maintenance and updates drastically.
+现在我们看看使用 Relay + GraphQL 做数据模型和 Redux 有什么区别。
 
-So how does using Relay and GraphQL compare to the Redux model of thinking about data?
+### Relay 和 GraphQL
 
-### Introducing Relay and GraphQL
+[Relay](https://facebook.github.io/relay/) 是 app 中的一个数据框架，[GraphQL](http://graphql.org/) 是 Relay 用来做数据表示的查询语言。GraphQL 同时还有一个 npm 包，可在服务器上运行，提供可以和 Relay 交互的数据源（关于 GraphQL 的具体设置细节教程，我们后续会更新，敬请期待）。
 
-Firstly, and in very simple terms, [Relay](https://facebook.github.io/relay/) is the data framework that lives inside the app, and [GraphQL](http://graphql.org/) is a query language used within Relay to represent the data schema. GraphQL is also run on a server separately from the app to provide a data source for Relay to interact with (we will be covering the GraphQL server setup in a future tutorial, stay tuned!).
+Relay 不是从 Flux 架构分化来了，它只和 GraphQL 有关。这也就是说，这和 Redux 的模型有着巨大的区别。我们在 [数据集成章节](tutorials/building-the-f8-app/data/) 提到的 Store/Reducer/Component 的交互，在 Relay 中就不存在了。用 Relay 做数据集成时，需要用另外一种方式，我们之前要做的很多工作都可以不用了。
 
-Relay isn't derived from the Flux architecture and is used only with GraphQL, which immediately means a big difference from the Redux model. The Store/Reducer/Component interaction we covered in the [data tutorial](tutorials/building-the-f8-app/data/) does not really exist with Relay. It takes a different approach, and removes a lot of the building work you normally need to do when integrating data.
+在 Relay + GraphQL 的模型中，每个组件指定自己需要的数据。Relay 调用数据，数据更新时，提供给组件最新的数据，并在客户端做缓存。app 需要更新数据时，在 Action 中创建一个 [GraphQL 变更](https://facebook.github.io/relay/docs/guides-mutations.html#content)，这和 Redux 类似。
 
-With Relay, each React component specifies exactly what data it depends on, using GraphQL. Relay handles everything about fetching that data, providing the component with updates when the data changes, and caching the data client-side. Anytime the app wants to change the data itself, it creates a [GraphQL Mutation](https://facebook.github.io/relay/docs/guides-mutations.html#content) instead of an Action as with Redux.
+### F8 App 中的例子
 
-### An Example from the F8 App
-
-Given the ability to progressively change a small part of a React Native app, we chose, as a kind of proof-of-concept, to swap Redux for Relay in the Info View of the F8 app:
+因为在 React Native 中，我们可以逐步地更改我们 app 中的一些小地方，为了验证可以将 Redux 更换成 Relay 这个概念，我们选择了 F8 app 中的 Info View，如下：
 
 ![Info view of F8 iOS app](static/images/info_view.png)
 
-This part of the app is pretty much entirely separate from the rest, with largely non-interactive content, making it an ideal place to start.
+这个 View 和 其他部分几乎是完全没关系的，有大量的非交互的内容，是做尝试的不二之选。
 
-The view itself contains an `<InfoList>` component that is pretty simple:
+这个 View 包含了一个非常简单的 `<InfoList>`，如下：
 
 ```js
 /* from js/tabs/info/F8InfoView.js */
@@ -64,7 +62,7 @@ function InfoList({viewer: {config, faqs, pages}, ...props}) {
 }
 ```
 
-This is just a basic layout with some other simple info displaying components inside of it, but where are the `props` and arguments in the component coming from? Well, inside the same .js file, we have a connected GraphQL fragment:
+这个是一个非常普通的布局，里面嵌套了另外一些布局，看起来普普通通，但是其中的 `props` 以及其他参数是哪来的呢？在同一个文件中，我们有一段 GraphQL 相关的代码：
 
 ```js
 /* from js/tabs/info/F8InfoView.js */
@@ -91,7 +89,7 @@ InfoList = Relay.createContainer(InfoList, {
 });
 ```
 
-Here we're defining exactly what data the `<InfoList>` component needs to be displayed, as a GraphQL fragment. This corresponds to the GraphQL object that we are defining on our GraphQL server:
+我们用一段 GraphQL 来定义 `<InfoList>` 组件显示时需要的数据，这个和 GraphQL server 上的 GraphQL 对象结构是一致的。
 
 ```js
 /* from server/schema/schema.js */
@@ -121,8 +119,8 @@ var F8UserType = new GraphQLObjectType({
 });
 ```
 
-You can see how the data is fetched by the GraphQL server, then Relay takes care of grabbing all the required data specified in the fragment. This data becomes available to the `<InfoList>` component as the `viewer` argument, and using some [destructuring assignments](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment), in turn this creates the `config`, `faqs`, `pages` variables which are used within the component.
+你可以看到，GraphQL server 是如何取数据的，Relay 根据定义去取这些数据。当数据准备完成时，使用做为 `viewer` 参数传入到 `<InfoList>` 中，同样使用 [destructuring assignments（解构赋值）](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) 创建 `config`,`faqs`,`pages` 等变量，在组件内使用。
 
-Thanks to Relay's built-in logic, we don't need to worry about subscribing to data changes, or caching data in a Store, or anything else - we just tell Relay what data our component should have, and we design our component in the standard React way. With our GraphQL server already set up, that's all we need to do.
+幸亏 Relay 内置的逻辑，我们不需要考虑到数据订阅，数据缓存之类的事情，我们只需要告诉 Relay 我们的组件需要什么样的数据，然后使用 React 标准的方式来写组件就好了。GraphQL server 的设置好了之后，我们所要做的，也确实就这些了。
 
-We have no data changes in this view, however if you want to learn more about how they work, please [read the Relay docs on mutations](https://facebook.github.io/relay/docs/guides-mutations.html#content).
+在我们这个 view 中，我们没有数据变更，如果你想了解关于数据变更方便的细节，你可以阅读 [Relay 的数据变更相关的文档](https://facebook.github.io/relay/docs/guides-mutations.html#content)。

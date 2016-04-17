@@ -4,13 +4,13 @@ buildingf8app:
   preview: /static/images/f8_app_tile.png
   firstpart: /tutorials/building-the-f8-app/planning/
   intro: >
-    <p>每年，作为 F8 会议的一部分，Facebook 开发 iOS 和 Android 的 app 让参会者安排会议行程，了解更多关于演讲和演讲者的信息。这个 app 还可提醒与会者即将开始的演讲和发送一些临时公告。</p>
+    <p>每年，作为 F8 会议的一部分，Facebook 都会开发一款会议相关的 iOS 和 Android 的 app，让参会者可以通过 app 安排会议行程，了解更多关于演讲和演讲者的信息。这个 app 还提醒参会者即将开始的演讲，或者发送一些临时公告。</p>
 
-    <p>今年，我们不仅在 <a href="https://github.com/fbsamples/f8app/" target="_blank">GitHub</a> 上开源代码，我们还制作了一系列的教程。想用简单明了的语言介绍 React Native 极其开源生态。</p>
+    <p>今年，我们不仅在 <a href="https://github.com/fbsamples/f8app/" target="_blank">GitHub</a> 上开源了代码，我们还制作了一系列的教程。想用简单明了的语言介绍 React Native 及其开源生态。</p>
 
-    <p>本教程开始写于 app 开发期间，在 app 发布之后，示例代码会随时演进、改善。 <a href="/feed">欢迎订阅以了解最新的动态</a>。</p>
+    <p>本教程开始写于 app 开发期间，在 app 发布之后，示例代码会随时更新、改善。 <a href="/feed">欢迎订阅以了解最新的动态</a>。</p>
 
-    <p>任何意见和建议换衣提交到 <a href="https://github.com/liaohuqiu/f8-app-tutorial-cn/issues">GitHub issues</a>。</p>
+    <p>任何意见和建议欢迎提交到 <a href="https://github.com/liaohuqiu/f8-app-tutorial-cn/issues">GitHub issues</a>。</p>
 
   items:
   - id: 1-1-planning
