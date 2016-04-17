@@ -59,7 +59,7 @@
             this.props.data.map(this.renderNavGroups)
           ),
           React.createElement("div", {className: classes, onClick: this.handleSlide},
-            React.createElement("span", null, "More in this Series"), React.createElement("i", null, String.fromCharCode(43))
+            React.createElement("span", null, "目录"), React.createElement("i", null, String.fromCharCode(43))
           )
         )
       );
@@ -71,7 +71,7 @@
       });
       return (
         React.createElement("div", {className: classes, key: index},
-          React.createElement("h3", null, "More in this Series"),
+          React.createElement("h3", null, "目录"),
           React.createElement("ul", null,
             child.items.map(this.renderNavItems)
           )

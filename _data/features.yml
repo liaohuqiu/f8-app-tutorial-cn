@@ -1,10 +1,10 @@
-- title: 核心
+- title: core
   items:
   - title: React
     link: http://facebook.github.io/react/
   - title: React Native
     link: http://facebook.github.io/react-native/
-- title: 数据
+- title: data
   items:
   - title: Flux
     link: http://facebook.github.io/flux/
@@ -14,7 +14,7 @@
     link: http://facebook.github.io/relay/
   - title: Redux
     link: http://redux.js.org/
-- title: 工具
+- title: tools
   items:
   - title: Flow
     link: http://flowtype.org/

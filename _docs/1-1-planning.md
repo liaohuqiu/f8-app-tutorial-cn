@@ -9,28 +9,28 @@ intro: >
   在这第一部分，我们将谈谈，我们是如何筹备这个 app 的，和进行技术选型的。
 ---
 
-> *这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。* 
+> *这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。教程于 2016 年 4 月 13 号发布到 makeitopen.com，内容翔实很有指导意义，[我](https://github.com/liaohuqiu) 看了之后花了周六日两天时间，翻译成中文，方便大家学习。* 
 
 
 在第一部分，我们会谈谈我们是如何筹备这个 app 的，在后面的部分，我们会一起看一些代码片段，讨论我们跨平台设计的考虑，分析我们 app 的数据层，阐释我们单元测试的策略。
 
 ### 迁移到 React Native
 
-在 2015 年的 F8 会议上，React Native for Android 发布。这一年的 F8 iOS 版本是用 React Native 开发的。Android 版本还是原生开发。 在这年之前，iOS 和 Android 都是原生开发。React Native for Android 发布，意味着我们有机会削减 app 的业务逻辑和 UI 代码了。一些 Facebook 的团队使用 React Native，[重用了大约 85% 的代码](https://code.facebook.com/posts/1189117404435352/react-native-for-android-how-we-built-the-first-cross-platform-react-native-app/)
+在 2015 年的 F8 会议上，React Native for Android 发布。这一年的 F8 app iOS 版本是用 React Native 开发的，而 Android 版本还是原生开发。 在这年之前，iOS 和 Android 都是原生开发。React Native for Android 发布，意味着我们有机会削减 app 的业务逻辑和 UI 代码了。一些 Facebook 的团队使用 React Native，[重用了大约 85% 的代码](https://code.facebook.com/posts/1189117404435352/react-native-for-android-how-we-built-the-first-cross-platform-react-native-app/) 。
 
 [在第二部分]({{ site.baseurl }}/tutorials/building-the-f8-app/design/) 我们还会谈到，React Native 还使得可以和 UI 设计师一起进行可视化组件的快速原型设计。
 
-现在让我们看看，如果要迁移到 React Native，我们需要考虑些什么:
+现在让我们看看，如果要迁移到 React Native，我们需要考虑些什么。
 
 ### 选择数据层
 
-2014 和 2015 的 app 都采用 [Parse Cloud Code](https://parse.com/) 作为数据后端。在筹备 2016 年的应用时，使用 Parse 可以复用已经存在的数据结构，项目可以快速开始。
+2014 和 2015 的 app 都采用 [Parse Cloud Code](https://parse.com/) 作为数据后端。在筹备 2016 年的 app 时，继续使用 Parse 可以复用已有的数据结构，项目可以快速开始。
 
-当然，使用 Parse 还有另外一些原因。在会前甚至会议期间，在 app 中显示的内容需要很高的更新频率。更新这些内容，无需很强的专业技能，比如对电子表格极其熟悉。Parse Cloud Code 的管理后台，完美地满足了这些需求。  
+当然，使用 Parse 还有另外一些原因。在会前甚至会议期间，在 app 中显示的内容需要很高的更新频率。更新这些内容，无需很强的专业技能，比如不需要对电子表格极其熟悉。Parse Cloud Code 的管理后台，完美地满足了这些需求。  
 
-考虑到以上因素, Parse 成了我们这个 app 数据后端的最佳的选择。根据 [Parse Cloud Code 的关闭通知](http://blog.parse.com/announcements/moving-on/), 我们决定过渡到新的开源 [Parse Server](http://blog.parse.com/announcements/introducing-parse-server-and-the-database-migration-tool/) 以及 [Parse Dashboard](https://github.com/ParsePlatform/parse-dashboard) 。
+考虑到以上因素, Parse 成了我们这个 app 数据后端的最佳的选择。根据 [Parse Cloud Code 的关闭通知](http://blog.parse.com/announcements/moving-on/)，我们决定过渡到新的开源 [Parse Server](http://blog.parse.com/announcements/introducing-parse-server-and-the-database-migration-tool/) 以及 [Parse Dashboard](https://github.com/ParsePlatform/parse-dashboard) 。
 
-React Native 无需和数据层紧密关联，我们在实现 UI 界面和业务逻辑的时候，可以使用一些假数据。只要数据结构一样，紧要一些很小的调整就可以更换 app 的数据源。对于 F8 这个 app 来说，开发完之后，从 Parse Cloud Code 过渡到开源的 Parse Server 将会很简单，我们在 [数据集成章节]({{ site.baseurl }}/tutorials/building-the-f8-app/data/) 会详细说明。
+React Native 无需和数据层紧密关联，我们在实现 UI 界面和业务逻辑的时候，可以使用一些假数据。只要数据结构一样，仅需一些很小的调整就可以更换 app 的数据源。对于 F8 这个 app 来说，开发完之后，从 Parse Cloud Code 过渡到开源的 Parse Server 将会很简单，我们在 [数据集成章节]({{ site.baseurl }}/tutorials/building-the-f8-app/data/) 会详细说明。
 
 <h3 id='data-access-with-react-native'>React Native 的数据访问</h3>
 

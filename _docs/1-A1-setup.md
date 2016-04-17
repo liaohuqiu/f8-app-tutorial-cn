@@ -8,6 +8,8 @@ layout: docs
 permalink: /tutorials/building-the-f8-app/local-setup/
 ---
 
+> *这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。教程于 2016 年 4 月 13 号发布到 makeitopen.com，内容翔实很有指导意义，[我](https://github.com/liaohuqiu) 看了之后花了周六日两天时间，翻译成中文，方便大家学习。* 
+
 你可以从 [iOS App Store](https://itunes.apple.com/us/app/f8/id853467066), 或者从 [Google Play Store](https://play.google.com/store/apps/details?id=com.facebook.f8) 下载安装 F8。
 
 如果你在阅读本教程时，你想在本地运行 App，你可根据以下简要的步骤进行设置：

@@ -654,15 +654,16 @@ a.blockButton {
       h2 {
         border-bottom: 1px solid darken($primary-bg, 10%);
         font-size: 130%;
-        font-style: italic;
+        // font-style: italic;
         font-weight: 900;
       }
 
       h3 {
         border-bottom: 1px dotted darken($primary-bg, 10%);
         font-size: 110%;
-        font-style: italic;
+        // font-style: italic;
         font-weight: 900;
+        margin-top: 10px;
       }
 
       h4 {
@@ -697,6 +698,7 @@ a.blockButton {
             display: block;
             font-size: 70%;
             font-weight: 300;
+            margin-bottom: 15px;
           }
         }
 
@@ -1490,4 +1492,7 @@ a.blockButton {
 blockquote {
   border-left: 2px solid rgba($primary-bg, 0.5);
   padding-left: 20px;
+}
+article {
+  margin-bottom: 30px;
 }

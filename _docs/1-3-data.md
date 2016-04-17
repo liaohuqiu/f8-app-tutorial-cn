@@ -9,6 +9,8 @@ intro: >
   我们将说明 React Native 中的数据流，Redux 在 F8 app 中是如何工作的，以及连接 Parse Server 的简单流程。
 ---
 
+> *这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。教程于 2016 年 4 月 13 号发布到 makeitopen.com，内容翔实很有指导意义，[我](https://github.com/liaohuqiu) 看了之后花了周六日两天时间，翻译成中文，方便大家学习。* 
+
 使用 [React](http://facebook.github.io/react/) 或 [React Native](http://facebook.github.io/react-native/) 开发 app，我们不需要太关注数据来自于哪，我们可以把更多的精力放在业务逻辑和 UI 上。
 
 在 [第一部分](tutorials/building-the-f8-app/planning/)，我们提到我们是如何调整 Parse Server 使之能够作为数据后端的。我们也提到，将会在 app 中使用 Redux 处理数据。在这一章节，我们会阐释 Redux 在 React Native app 中是如何工作的，以及连接到 Parse Server 的简单流程。

@@ -37,7 +37,7 @@
         {{ page.content | split:'<!--truncate-->' | first }}
         <div class="read-more">
           <a href="{{ site.baseurl }}{{ page.url }}" >
-            ...Read More
+            ...阅读更多
           </a>
         </div>
       {% else %}
@@ -47,6 +47,5 @@
       {{ content }}
     {% endif %}
   </article>
-  {% include doc_rating.html %}
   {% include doc_paging.html %}
 </div>

@@ -9,6 +9,8 @@ intro: >
   探索如何使用 Nuclide，Flow，以及 Jest，以提高编写 React Native 时的代码质量。
 ---
 
+> *这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。教程于 2016 年 4 月 13 号发布到 makeitopen.com，内容翔实很有指导意义，[我](https://github.com/liaohuqiu) 看了之后花了周六日两天时间，翻译成中文，方便大家学习。* 
+
 在传统的软件开发周期中，测试经常被当做是开发接近完成后，一个特别的阶段。对于新生的开源框架，这种看法似乎更接近于事实，因为这些项目的发布时，有时没有相关的测试技术。
 
 幸好 Facebook 在开发 React Native 之初就持续地将测试技术放在心中。在这一部分，我们将会展示如何使用 [Nuclide](http://nuclide.io)，[Flow](http://flowtype.org) 和 [Jest](http://facebook.github.io/jest/) 提高你编写的 React Native 的代码质量的。
