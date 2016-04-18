@@ -5,7 +5,7 @@ tagline: Connecting Facebook's Open Source projects
 fbappid: ""
 gacode: "UA-43024238-14"
 description: >
-  This is a series of tutorials designed to introduce React Native and its Open Source ecosystem in plain English, written alongside the building of the F8 2016 app for Android and iOS.
+  Facebook 2016 年 F8 app 的中文教程。React Native 的官方最佳实践，应该是最好的 React Native 学习资料了。从服务器端到 App，包括 Redux，Relay，GraphQL。教程涵盖：如何进行 app 技术选型，如何做跨平台设计，如何做 React Native 的测试。
 baseurl:
 url: http://f8-app-tutorial-cn.liaohuqiu.net
 ghrepo: "liaohuqiu/f8-app-tutorial-cn"

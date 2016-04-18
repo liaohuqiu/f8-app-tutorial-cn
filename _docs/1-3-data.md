@@ -46,7 +46,6 @@ class Example extends React.Component {
 每个 React 组件都有两种类型的数据，他们拥有不一样的角色：
 
 * `props` 是在组件创建时就传入的数据，是不可变的。
-
 * `state` 是组件可变的数据。
 
 为了减少重复，建议 app 组件层级关系中最高层级的父组件（有时称为容器组件）拥有 `state` ，然后使用 `props` 向下传递给子组件。这样数据单向地从上游往下游流动，使得整个流程很快，呈现模块化。
@@ -57,7 +56,7 @@ class Example extends React.Component {
 
 为了进一步阐述 React 中数据使用技术，Facebook 引入了 [Flux 架构](https://facebook.github.io/flux/docs/overview.html)。这个架构更像是一个你应用中需要实现的模式，而非一个真正能用的框架。
 
-我们没在我们的应用中使用 [Flux](https://github.com/facebook/flux)，我们所使用的框架： Redux，是从 Flux 架构分化而来的，让我们进一步来看看。
+我们没在我们的应用中使用 [Flux](https://github.com/facebook/flux)，我们所使用的框架： Redux，是从 Flux 架构分化而来的。
 
 Flux 扩充了 React 中的数据流程。它引入了 Store 这个概念：Store 是包含 app 的 `state` 的对象。 Flux 还引入实时修改 `state` 的新的流程。
 
@@ -72,7 +71,7 @@ Flux 扩充了 React 中的数据流程。它引入了 Store 这个概念：Stor
 
 你可以看到 Flux 是如何在 React 中强制数据单向流动的，这使得 React 的数据部分更加优雅和结构化。
 
-不过我们没有是一共 Flux，我们到此为止，如果你想了解更多，你可以访问 [Flux 教程](https://facebook.github.io/flux/docs/todo-list.html)。
+不过我们没有使用 Flux，如果你想了解更多，你可以访问 [Flux 教程](https://facebook.github.io/flux/docs/todo-list.html)。
 
 那么我们真正使用的框架，Redux 和 Flux 又是怎样一个关系呢？
 
@@ -499,9 +498,7 @@ module.exports = connect(select, mapDispatchToProps)(GeneralScheduleView);
 
 当点击 "DAY 1" 的时候，`renderStickyHeader()` 中的 `onChange()` 会被触发，第 46 行的 `switchDay` 被调用，`props` 的 `switchDay` 被 `mapDispatchToProps` 映射到了 61 行的函数上。这个函数分发第 2 行引入的 `switchDay()` 返回的 Action。
 
-And inside the navigation Reducer we can see that this generates a new `state` tree with a modified `day` value:
-
-在 Reducer 中，将修改过后的时间值 `dqy` 更新到 `state` 中：
+在 Reducer 中，将修改过后的时间值 `day` 更新到 `state` 中：
 
 ```js
 /* from js/reducers/navigation.js */
