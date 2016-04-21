@@ -4,7 +4,7 @@
 	<title type="text" xml:lang="en">Facebook React Native 教程</title>
 	<link type="application/atom+xml" href="http://f8-app-tutorial-cn.liaohuqiu.net/feed/" rel="self"/>
  	<link type="text" href="http://f8-app-tutorial-cn.liaohuqiu.net" rel="alternate"/>
-	<updated>2016-04-22T00:49:57+08:00</updated>
+	<updated>2016-04-22T00:52:52+08:00</updated>
 	<id>http://f8-app-tutorial-cn.liaohuqiu.net</id>
 	<author>
 		<name>Facebook</name>
@@ -16,7 +16,7 @@
 	<entry>
 		<title>第一章: App 的筹备</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/planning/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/planning/</id>
 		<content type="html">在这第一部分，我们将谈谈，我们是如何筹备这个 app 的，和进行技术选型的。
 </content>
@@ -26,7 +26,7 @@
 	<entry>
 		<title>第二章: 应用的多平台设计</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/design/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/design/</id>
 		<content type="html">我们将谈谈为什么 React Native 可以针对，或者甚至是应该针对，各个平台量身定制。而非各个平台上没有任何区分。
 </content>
@@ -36,7 +36,7 @@
 	<entry>
 		<title>第三章: 数据集成</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/data/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/data/</id>
 		<content type="html">我们将说明 React Native 中的数据流，Redux 在 F8 app 中是如何工作的，以及连接 Parse Server 的简单流程。
 </content>
@@ -46,7 +46,7 @@
 	<entry>
 		<title>第四章: 测试</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/testing/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/testing/</id>
 		<content type="html">探索如何使用 Nuclide，Flow，以及 Jest，以提高编写 React Native 时的代码质量。
 </content>
@@ -56,7 +56,7 @@
 	<entry>
 		<title>附录 1: 本地设置运行 App</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/local-setup/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/local-setup/</id>
 		<content type="html"></content>
 	</entry>
@@ -65,7 +65,7 @@
 	<entry>
 		<title>附录 2: 使用 Relay 和 GraphQL</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/relay/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/relay/</id>
 		<content type="html"></content>
 	</entry>
@@ -74,7 +74,7 @@
 	<entry>
 		<title>附录 3: 移植 F8 App 到 Windows</title>
 		<link href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/windows/"/>
-		<updated>2016-04-22T00:49:57+08:00</updated>
+		<updated>2016-04-22T00:52:52+08:00</updated>
 		<id>http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/windows/</id>
 		<content type="html"></content>
 	</entry>
