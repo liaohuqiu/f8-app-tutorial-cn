@@ -75,7 +75,7 @@ Flux 扩充了 React 中的数据流程。它引入了 Store 这个概念：Stor
 
 那么我们真正使用的框架，Redux 和 Flux 又是怎样一个关系呢？
 
-<h3 id='flux-to-redux'>从Flux 到 Redux</h3>
+<h3 id='flux-to-redux'>从 Flux 到 Redux</h3>
 
 Redux 是一个实现了 Flux 架构，但又从 Flux 中剥离的框架。[react-redux 包提供的官方的数据绑定实现](https://github.com/reactjs/react-redux) 使得和 React 的集成变得很简单。
 
@@ -110,7 +110,7 @@ Redux 中没有 Dispatcher，并且对于整个 app 的 `state`，只有一个 S
 * Action 是唯一一个可以导致 `state` 变化的途径，这也将这流程从 UI 组件中归集起来。另外，因为 Action 都是由 Reducer 妥当排序的，这也防止了条件竞争。
 * `state` 大体上是不可变的。创建一系列的 `state` ，每个 `state` 代表每个个体的变化。这给我们了一个 app 中清晰并且易于追溯的 `state` 历史。
 
-### Putting This Together
+### 整体
 
 我们已经抽象地谈到了数据流，现在让我们看看我们的 app 中是如何运用的，以及我们从中学到的什么。
 
@@ -119,8 +119,6 @@ Redux 中没有 Dispatcher，并且对于整个 app 的 `state`，只有一个 S
 [Redux 的文档](http://redux.js.org/docs/basics/Store.html) 很好地解释了如何创建一个简单的 Store，我们假设对文档所说的这些基础部分，你已经游刃有余。
 
 ##### Store 的离线同步
-
-We've talked before about needing local offline storage of the data, so that the app can operate in low-signal or no-signal conditions (vital at a tech conference!). Luckily, because we're using Redux, there's a very simple module we can use with our app called 
 
 前面我们提到，为了我们的 app 能在没有网络或者网络条件不好的情况下工作，我们需要离线的本地存储。幸好，我们使用 Redux，有一个非常简单 module 可以用在我们的 app 中：[Redux 的持久化](https://www.npmjs.com/package/redux-persist)。
 
@@ -170,7 +168,7 @@ function configureStore(onComplete: ?() => void) {
 
 目前位置，我们的 Store 基本上算处理完了。如果你想了解更多，你可以看看： [Redux 持久化实现的技术细节](https://www.npmjs.com/package/redux-persist#basic-usage)。
 
-### Reducers
+### Reducer
 
 在 [前面关于 Redux 的阐释中](#flux-to-redux)，我们提到 Redux 引入了一个 Reducer 对象。一个 app 可以有多个 Reducer，每个关注 `state` 的不同部分。比如：在一个带评论的 app 中，有一个 Reducer 处理登录相关的状态，另外一个 Reducer 处理评论数据。
 
