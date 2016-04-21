@@ -518,8 +518,6 @@ module.exports = connect(select, mapDispatchToProps)(GeneralScheduleView);
   Parse.serverURL = 'http://exampleparseserver.com:1337/parse'
 ```
 
-That's it, we're connected to the Parse API inside React Native.
-
 是的，由于我们使用了 [Parse + React](https://github.com/ParsePlatform/ParseReact) SDK （在 `parse/react-native` 包中），整个过程就是这么简单。
 
 ##### Parse 和 Action
