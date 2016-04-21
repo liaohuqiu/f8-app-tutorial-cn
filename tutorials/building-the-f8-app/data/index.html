@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta property="og:url" content="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/data/" />
+	<meta property="og:site_name" content="Facebook React Native 教程"/>
+	<meta property="og:title" content="Facebook React Native 教程" />
+	<meta property="og:image" content="http://f8-app-tutorial-cn.liaohuqiu.net/static/og_image.png" />
+	<meta property="og:description" content="我们将说明 React Native 中的数据流，Redux 在 F8 app 中是如何工作的，以及连接 Parse Server 的简单流程。" />
+  <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css">
+  <link rel="stylesheet" type="text/css" media="screen" href="//cdn.jsdelivr.net/font-hack/2.019/css/hack.min.css">
+
+  <link rel="icon" href="static/favicon_junction.png" type="image/x-icon">
+
+  <base href="/" />
+
+  <script src="https://fb.me/react-with-addons-0.13.1.min.js"></script>
+
+  <title>数据集成 &mdash; Facebook React Native 教程</title>
+  <meta name="description" content="  这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。教程于 2016 年 4 月 13 号发布到 makeitopen.com，内容翔实很有指导意义，我 看了之后花了周六日两天时间，翻译成中文，方便大家学习。">
+
+  <link rel="canonical" href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/data/">
+  <link rel="alternate" type="application/rss+xml" title="Facebook React Native 教程" href="http://f8-app-tutorial-cn.liaohuqiu.net/feed/" />
+</head>
+
+  <body>
+    <div id="fixed_header" class="fixedHeaderContainer visible">
+  <header>
+    <a href="/">
+      <img src="/static/logo_square_small.png">
+      <h2>构建 Facebook F8 2016 App / React Native 开发指南</h2>
+    </a>
+
+    <div class="navigationWrapper navigationFull" id="flat_nav">
+      <nav class="navigation">
+        <ul>
+          
+        </ul>
+      </nav>
+    </div>
+  </header>
+</div>
+
+    <div class="navPusher">
+      
+<div class="mainContainer blogContainer postContainer">
+  <div id="main_wrap" class="wrapper mainWrapper">
+    
+<div class="post">
+  <header class="post-header">
+    <h2 class="postSubtitle">
+      <span>构建 F8 2016 App: 第三章</span>
+      数据集成
+    </h2>
+    <div class="postPlugins">
+      <div class="pluginBlock">
+        <a href="https://twitter.com/share" class="twitter-share-button" data-hashtags="数据集成">Tweet</a>
+      </div>
+      <div class="fb-like" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+    </div>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+    <script>
+      window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '',
+        xfbml      : true,
+        version    : 'v2.3'
+      });
+      };
+
+      (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {return;}
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+  </header>
+
+  <article class="post-content">
+   
+      <blockquote>
+  <p><em>这一系列的教程写于 F8 2016 app 开发期间，为的是用简单的文字来介绍 React Native 及其开源生态。教程于 2016 年 4 月 13 号发布到 makeitopen.com，内容翔实很有指导意义，<a href="https://github.com/liaohuqiu">我</a> 看了之后花了周六日两天时间，翻译成中文，方便大家学习。</em></p>
+</blockquote>
+
+<p>使用 <a href="http://facebook.github.io/react/">React</a> 或 <a href="http://facebook.github.io/react-native/">React Native</a> 开发 app，我们不需要太关注数据来自于哪，我们可以把更多的精力放在业务逻辑和 UI 上。</p>
+
+<p>在 <a href="tutorials/building-the-f8-app/planning/">第一部分</a>，我们提到我们是如何调整 Parse Server 使之能够作为数据后端的。我们也提到，将会在 app 中使用 Redux 处理数据。在这一章节，我们会阐释 Redux 在 React Native app 中是如何工作的，以及连接到 Parse Server 的简单流程。</p>
+
+<p>在我们开始讨论 Redux 之前，让我们看看 React 的数据整合是如何进化到创建 Redux 本身的。</p>
+
+<h3 id="react-app-">首先，React app 如何和数据交互？</h3>
+
+<p>React 经常被做为 MVC 中的 <code class="highlighter-rouge">View</code> 提到。但 React 比那个微妙多了，它把 MVC 看待成了其他东西。</p>
+
+<p>让我们看看 MVC 的架构：</p>
+
+<ul>
+  <li>Model 是数据</li>
+  <li>View 是数据在 app 中的表现</li>
+  <li>Controller 处理数据交互逻辑</li>
+</ul>
+
+<p>在 React 中，我们使用多个组件组成一个 View，同时每个组件又可以处理 Controller 才具有的处理逻辑的能力。比如：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10</pre></td><td class="code"><pre><span class="kr">class</span> <span class="nx">Example</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+    <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// 使用现有数据呈现 View，有可能是一个窗体</span>
+        <span class="c1">// 窗体将数据提交给 handleSubmit 函数</span>
+    <span class="p">}</span>
+
+    <span class="nx">handleSubmit</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 处理数据，controller 的逻辑</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>每个 React 组件都有两种类型的数据，他们拥有不一样的角色：</p>
+
+<ul>
+  <li><code class="highlighter-rouge">props</code> 是在组件创建时就传入的数据，是不可变的。</li>
+  <li><code class="highlighter-rouge">state</code> 是组件可变的数据。</li>
+</ul>
+
+<p>为了减少重复，建议 app 组件层级关系中最高层级的父组件（有时称为容器组件）拥有 <code class="highlighter-rouge">state</code> ，然后使用 <code class="highlighter-rouge">props</code> 向下传递给子组件。这样数据单向地从上游往下游流动，使得整个流程很快，呈现模块化。</p>
+
+<p>如果你想了解更多关于这个建议背后的考虑和原因，你可以阅读 React 网站上的 <a href="https://facebook.github.io/react/docs/thinking-in-react.html">Thinking in React</a> 章节相关的内容。</p>
+
+<h3 id="store--state">Store 和 State</h3>
+
+<p>为了进一步阐述 React 中数据使用技术，Facebook 引入了 <a href="https://facebook.github.io/flux/docs/overview.html">Flux 架构</a>。这个架构更像是一个你应用中需要实现的模式，而非一个真正能用的框架。</p>
+
+<p>我们没在我们的应用中使用 <a href="https://github.com/facebook/flux">Flux</a>，我们所使用的框架： Redux，是从 Flux 架构分化而来的。</p>
+
+<p>Flux 扩充了 React 中的数据流程。它引入了 Store 这个概念：Store 是包含 app 的 <code class="highlighter-rouge">state</code> 的对象。 Flux 还引入实时修改 <code class="highlighter-rouge">state</code> 的新的流程。</p>
+
+<ul>
+  <li>每个 <strong>Store</strong> 都有一个回调函数，这个回调注册到 Dispatcher。</li>
+  <li><strong>View</strong>（就是 React 中的组件）可以触发 <strong>Action</strong>，它是一个包含一系列数据的一个对象，比如，是一个 form 输入的数据。同时，它还包含有一个 <strong>action type</strong> ，这是一个常量，用来描述正在执行的 Action。</li>
+  <li>Action 被发送到 <strong>Dispatcher</strong>。</li>
+  <li>Dispatcher 将这个 Action 传播到所有注册的 Store 的回调函数上。</li>
+  <li>如果 Store 对 Action 感兴趣（根据 Action 的类型判断），Store 会更新自身，以及其所包含的 <code class="highlighter-rouge">state</code>，更新之后，发送一个事件。</li>
+  <li>我们前面提到的容器组件，称为 <strong>Controller View</strong> 会监听这些事件，当收到事件时，从 Store 获取新数据。</li>
+  <li>取到数据之后通过调用 <a href="https://facebook.github.io/react/docs/component-api.html#setstate"><code class="highlighter-rouge">setState()</code></a> 使得其所包含的所有子组件重新 <code class="highlighter-rouge">render()</code>。</li>
+</ul>
+
+<p>你可以看到 Flux 是如何在 React 中强制数据单向流动的，这使得 React 的数据部分更加优雅和结构化。</p>
+
+<p>不过我们没有使用 Flux，如果你想了解更多，你可以访问 <a href="https://facebook.github.io/flux/docs/todo-list.html">Flux 教程</a>。</p>
+
+<p>那么我们真正使用的框架，Redux 和 Flux 又是怎样一个关系呢？</p>
+
+<h3 id="flux-to-redux">从Flux 到 Redux</h3>
+
+<p>Redux 是一个实现了 Flux 架构，但又从 Flux 中剥离的框架。<a href="https://github.com/reactjs/react-redux">react-redux 包提供的官方的数据绑定实现</a> 使得和 React 的集成变得很简单。</p>
+
+<p>Redux 中没有 Dispatcher，并且对于整个 app 的 <code class="highlighter-rouge">state</code>，只有一个 Store。</p>
+
+<p>那么 Redux 中的数据流到底是怎样的？详细的部分我们下面后阐述，现在让我们看看大致的流程：</p>
+
+<ul>
+  <li>React 可以触发 Action，比如按钮点击按钮。</li>
+  <li>Action 是对象，包含一个类型以及相关的数据，通过 Store 的 <code class="highlighter-rouge">dispatch()</code> 函数发送到 Store。</li>
+  <li>Store 接收 Action 的数据并将其连同当前的 <code class="highlighter-rouge">state</code> 树（<a href="https://egghead.io/lessons/javascript-redux-the-single-immutable-state-tree"><code class="highlighter-rouge">state</code> 树</a> 是包含所有 <code class="highlighter-rouge">state</code> 的一种特殊的数据结构，是一个单一的对象）发给 <strong>Reducer</strong>。</li>
+  <li><strong>Reducer</strong> 是一个 <a href="http://redux.js.org/docs/basics/Reducers.html#handling-actions">pure function</a>，它接收一个之前的 <code class="highlighter-rouge">state</code> 和一个 Action；并基于此 Action 将会产生的影响，返回一个新的 <code class="highlighter-rouge">state</code>。一个 app 可以包含一个 Reducer，但大部分的 app 最后会包含多个，每个处理 <code class="highlighter-rouge">state</code> 中不同的部分，<a href="#reducers">下文</a> 会提到。</li>
+  <li>Store 接收到新的 <code class="highlighter-rouge">state</code>，并替换当前的。</li>
+  <li>当 <code class="highlighter-rouge">state</code> 变化时，Store 触发 <a href="http://redux.js.org/docs/api/Store.html#subscribe">事件</a>。</li>
+  <li>任何 <a href="http://redux.js.org/docs/api/Store.html#subscribe">订阅了事件</a> 的组件 <a href="http://redux.js.org/docs/api/Store.html#getState">从 Store 中提取新的 <code class="highlighter-rouge">state</code></a>。</li>
+  <li>组件使用新的 <code class="highlighter-rouge">state</code> 进行更新。</li>
+</ul>
+
+<p>简单起见，这个流程可用下图表示：</p>
+
+<p><img src="/static/images/redux_flowchart.png" alt="Redux data flow as described above" /></p>
+
+<p>你可以看到数据随着一个很清晰的单项路径流动，没有重叠，没有反方向的数据流。这图也展示了 app 的每一部分可以多么清晰地分开：</p>
+
+<ul>
+  <li>Store 只关心所只有的 <code class="highlighter-rouge">state</code>；</li>
+  <li>View 中的组件，只关心显示数据和触发 Action；</li>
+  <li>Action 只关注 <code class="highlighter-rouge">state</code> 中的某些数据发生变化了，并包含了这些数据；</li>
+  <li>Reducer 只关注旧的状态并将 Action 放入到 <code class="highlighter-rouge">state</code> 中。</li>
+</ul>
+
+<p>一切都是模块化的，非常优雅。当阅读这样的代码的时候，表意非常明显，很容易理解。</p>
+
+<p>和 Flux 相比，这有另外的一些好处：</p>
+
+<ul>
+  <li>Action 是唯一一个可以导致 <code class="highlighter-rouge">state</code> 变化的途径，这也将这流程从 UI 组件中归集起来。另外，因为 Action 都是由 Reducer 妥当排序的，这也防止了条件竞争。</li>
+  <li><code class="highlighter-rouge">state</code> 大体上是不可变的。创建一系列的 <code class="highlighter-rouge">state</code> ，每个 <code class="highlighter-rouge">state</code> 代表每个个体的变化。这给我们了一个 app 中清晰并且易于追溯的 <code class="highlighter-rouge">state</code> 历史。</li>
+</ul>
+
+<h3 id="putting-this-together">Putting This Together</h3>
+
+<p>我们已经抽象地谈到了数据流，现在让我们看看我们的 app 中是如何运用的，以及我们从中学到的什么。</p>
+
+<h4 id="store">Store</h4>
+
+<p><a href="http://redux.js.org/docs/basics/Store.html">Redux 的文档</a> 很好地解释了如何创建一个简单的 Store，我们假设对文档所说的这些基础部分，你已经游刃有余。</p>
+
+<h5 id="store-">Store 的离线同步</h5>
+
+<p>We’ve talked before about needing local offline storage of the data, so that the app can operate in low-signal or no-signal conditions (vital at a tech conference!). Luckily, because we’re using Redux, there’s a very simple module we can use with our app called</p>
+
+<p>前面我们提到，为了我们的 app 能在没有网络或者网络条件不好的情况下工作，我们需要离线的本地存储。幸好，我们使用 Redux，有一个非常简单 module 可以用在我们的 app 中：<a href="https://www.npmjs.com/package/redux-persist">Redux 的持久化</a>。</p>
+
+<p>配合我们的 Store，我们也用到了 <a href="http://redux.js.org/docs/advanced/Middleware.html"><strong>Middleware</strong></a>，这点我们在后面的 <a href="/tutorials/building-the-f8-app/testing/">测试相关的章节</a> 会更具体地提到。通过 middleware，我们可以在 Action 被分发到 Reducer 之前，加入一些处理逻辑，比如：日志，crash 报告，调用异步 API，等等。</p>
+
+<p>我们实际的代码如下；</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9</pre></td><td class="code"><pre><span class="cm">/* js/store/configureStore.js */</span>
+<span class="kd">var</span> <span class="nx">createF8Store</span> <span class="o">=</span> <span class="nx">applyMiddleware</span><span class="p">(...)(</span><span class="nx">createStore</span><span class="p">);</span>
+
+<span class="kd">function</span> <span class="nx">configureStore</span><span class="p">(</span><span class="nx">onComplete</span><span class="err">:</span> <span class="p">?()</span> <span class="o">=&gt;</span> <span class="k">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">store</span> <span class="o">=</span> <span class="nx">autoRehydrate</span><span class="p">()(</span><span class="nx">createF8Store</span><span class="p">)(</span><span class="nx">reducers</span><span class="p">);</span>
+  <span class="nx">persistStore</span><span class="p">(</span><span class="nx">store</span><span class="p">,</span> <span class="p">{</span><span class="na">storage</span><span class="p">:</span> <span class="nx">AsyncStorage</span><span class="p">},</span> <span class="nx">onComplete</span><span class="p">);</span>
+  <span class="p">...</span>
+  <span class="k">return</span> <span class="nx">store</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>上面的代码也许有些难懂，我们展开看看：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre></td><td class="code"><pre><span class="cm">/* js/store/configureStore.js */</span>
+
+<span class="kd">var</span> <span class="nx">middlewareWrapper</span> <span class="o">=</span> <span class="nx">applyMiddleware</span><span class="p">(...);</span>
+<span class="kd">var</span> <span class="nx">createF8Store</span> <span class="o">=</span> <span class="nx">middlewareWrapper</span><span class="p">(</span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducers</span><span class="p">));</span>
+
+<span class="kd">function</span> <span class="nx">configureStore</span><span class="p">(</span><span class="nx">onComplete</span><span class="err">:</span> <span class="p">?()</span> <span class="o">=&gt;</span> <span class="k">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">rehydrator</span> <span class="o">=</span> <span class="nx">autoRehydrate</span><span class="p">();</span>
+  <span class="kr">const</span> <span class="nx">store</span> <span class="o">=</span> <span class="nx">rehydrator</span><span class="p">(</span><span class="nx">createF8Store</span><span class="p">);</span>
+  <span class="nx">persistStore</span><span class="p">(</span><span class="nx">store</span><span class="p">,</span> <span class="p">{</span><span class="na">storage</span><span class="p">:</span> <span class="nx">AsyncStorage</span><span class="p">},</span> <span class="nx">onComplete</span><span class="p">);</span>
+  <span class="p">...</span>
+  <span class="k">return</span> <span class="nx">store</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<ol>
+  <li>
+    <p>第 3 行，<code class="highlighter-rouge">applyMiddleware()</code> 返回一个函数，这个函数我们将会作用于我们的 Store 对象。关于 <code class="highlighter-rouge">applyMiddleware()</code>，你可以通过<br />
+<a href="http://redux.js.org/docs/api/applyMiddleware.html">Redux <code class="highlighter-rouge">applyMiddleware</code> 相关的文档</a>) 了解更多的信息。</p>
+  </li>
+  <li>
+    <p>第 4 行，<code class="highlighter-rouge">reducers</code> 是 app 中的所有 Reducer，<a href="http://redux.js.org/docs/api/createStore.html"><code class="highlighter-rouge">createStore()</code></a> 接收这个参数进行处理，返回一个 Store 对象，这个对象交给 Middleware 处理，返回值我们记为 <code class="highlighter-rouge">createF8Store</code>。</p>
+  </li>
+  <li>
+    <p>和 <code class="highlighter-rouge">applyMiddleware()</code> 相似， <a href="https://github.com/rt2zz/redux-persist#autorehydrate">Persist 的 <code class="highlighter-rouge">autoRehydrate()</code></a> 它将返回一个可作用于 Store 的函数，我们记为：<code class="highlighter-rouge">rehydrator</code>。<code class="highlighter-rouge">rehydrator</code> 作用于我们的 <code class="highlighter-rouge">Store</code>，可将之前存储于本地的 Store 对象用当前的 Store 的 <code class="highlighter-rouge">state</code> 进行自动更新。</p>
+  </li>
+  <li>
+    <p>第 9 行，<a href="https://github.com/rt2zz/redux-persist#persiststorestore-config-callback">Persist 包中的 <code class="highlighter-rouge">persistStore()</code> 函数</a> 处理 Store 保存到本地存储相关的逻辑。这其中，我们配置使用了 <a href="https://facebook.github.io/react-native/docs/asyncstorage.html">React Native 内置的异步存储系统</a>)。<code class="highlighter-rouge">autoRehydrate()</code> 和 <code class="highlighter-rouge">persistStore()</code> 实际就是我们用来实现离线数据同步的所有代码了。</p>
+  </li>
+</ol>
+
+<p>现在，没有网络连接的时候，之前的 Store 对象还在本地存储中，从用户的角度来看，app 还是可用的。</p>
+
+<p>目前位置，我们的 Store 基本上算处理完了。如果你想了解更多，你可以看看： <a href="https://www.npmjs.com/package/redux-persist#basic-usage">Redux 持久化实现的技术细节</a>。</p>
+
+<h3 id="reducers">Reducers</h3>
+
+<p>在 <a href="#flux-to-redux">前面关于 Redux 的阐释中</a>，我们提到 Redux 引入了一个 Reducer 对象。一个 app 可以有多个 Reducer，每个关注 <code class="highlighter-rouge">state</code> 的不同部分。比如：在一个带评论的 app 中，有一个 Reducer 处理登录相关的状态，另外一个 Reducer 处理评论数据。</p>
+
+<p>在 F8 app 中，所有的 Reducer 的源码都在 <code class="highlighter-rouge">js/reducers/</code> 目录下，这里我们简要地看看 <code class="highlighter-rouge">user.js</code>：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58</pre></td><td class="code"><pre><span class="cm">/* js/reducers/user.js */</span>
+<span class="kr">import</span> <span class="nx">type</span> <span class="p">{</span><span class="nx">Action</span><span class="p">}</span> <span class="nx">from</span> <span class="s1">'../actions/types'</span><span class="p">;</span>
+
+<span class="kr">export</span> <span class="nx">type</span> <span class="nx">State</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">isLoggedIn</span><span class="p">:</span> <span class="kr">boolean</span><span class="p">;</span>
+  <span class="nl">hasSkippedLogin</span><span class="p">:</span> <span class="kr">boolean</span><span class="p">;</span>
+  <span class="nl">sharedSchedule</span><span class="p">:</span> <span class="p">?</span><span class="kr">boolean</span><span class="p">;</span>
+  <span class="nl">id</span><span class="p">:</span> <span class="p">?</span><span class="nx">string</span><span class="p">;</span>
+  <span class="nl">name</span><span class="p">:</span> <span class="p">?</span><span class="nx">string</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kr">const</span> <span class="nx">initialState</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">isLoggedIn</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="na">hasSkippedLogin</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="na">sharedSchedule</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+  <span class="na">id</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+  <span class="na">name</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="kd">function</span> <span class="nx">user</span><span class="p">(</span><span class="nx">state</span><span class="p">:</span> <span class="nx">State</span> <span class="o">=</span> <span class="nx">initialState</span><span class="p">,</span> <span class="nx">action</span><span class="p">:</span> <span class="nx">Action</span><span class="p">):</span> <span class="nx">State</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">'LOGGED_IN'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="p">{</span><span class="nx">id</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">sharedSchedule</span><span class="p">}</span> <span class="o">=</span> <span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">sharedSchedule</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">sharedSchedule</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="na">isLoggedIn</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="na">hasSkippedLogin</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">sharedSchedule</span><span class="p">,</span>
+      <span class="nx">id</span><span class="p">,</span>
+      <span class="nx">name</span><span class="p">,</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">'SKIPPED_LOGIN'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="na">isLoggedIn</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="na">hasSkippedLogin</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="na">sharedSchedule</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="na">id</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="na">name</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">'LOGGED_OUT'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">initialState</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">'SET_SHARING'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="p">...</span><span class="nx">state</span><span class="p">,</span>
+      <span class="na">sharedSchedule</span><span class="p">:</span> <span class="nx">action</span><span class="p">.</span><span class="nx">enabled</span><span class="p">,</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">'RESET_NUXES'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="na">sharedSchedule</span><span class="p">:</span> <span class="kc">null</span><span class="p">};</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">state</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">user</span><span class="p">;</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>正如你所见，这个 Reducer 处理 login/logout 以及用户具体选项改变相关的逻辑。下面我们一部分一部分地来看。</p>
+
+<blockquote>
+  <p>注意， 22 行我们使用了 ES2015  <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment">destructuring assignment</a> 把 <code class="highlighter-rouge">action.data</code> 中对应 key 为左边变量名的值，赋值给了左边的变量。</p>
+</blockquote>
+
+<h5 id="section">1. 初始状态</h5>
+
+<p>最开始，我们在第 12 行，依照 <a href="http://flowtype.org/docs/type-aliases.html">Flow 的类型别名规范</a> （<a href="/tutorials/building-the-f8-app/testing/">测试相关的章节</a> 详谈），我们定义了初始状态。 <code class="highlighter-rouge">initialState</code> 定义的值，会在 app 一启动就加载。</p>
+
+<h5 id="reducer-">2. Reducer 函数</h5>
+
+<p>从 20 到 56 行是 Reducer 的具体实现部分，实际也是相对简单的。函数接受 <code class="highlighter-rouge">state</code> 和 Action 作为参数，<code class="highlighter-rouge">state</code> 的默认值是 <code class="highlighter-rouge">initialState</code>。根据 Action 具体的 <code class="highlighter-rouge">type</code>，改变 <code class="highlighter-rouge">state</code>，返回一个新的 <code class="highlighter-rouge">state</code>。</p>
+
+<p>以 43 行的 <code class="highlighter-rouge">LOGGED_OUT</code> 这个 Action 为例，我们把 <code class="highlighter-rouge">state</code> 重置为 <code class="highlighter-rouge">initialState</code>；而在 21 行，对于 <code class="highlighter-rouge">LOGGED_IN</code>，使用了 <code class="highlighter-rouge">action.data</code> 中 <code class="highlighter-rouge">id, name, sharedSchedule</code> 等用户输入的值，构造了一个新的 <code class="highlighter-rouge">state</code> 并返回。</p>
+
+<p>现在让我们看看 46 行的 <code class="highlighter-rouge">SET_SHARING</code>，这里有一个 <code class="highlighter-rouge">...state</code>。  这个语法糖其实就是 <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign"><code class="highlighter-rouge">Object.assign()</code></a> ，但更紧凑和可读一些。这是 <a href="https://facebook.github.io/react-native/docs/javascript-environment.html#javascript-syntax-transformers">React 所包含的 Javascript 语法转换</a> 的一部分，称为 <a href="http://redux.js.org/docs/recipes/UsingObjectSpreadOperator.html">Object Spread Operator（对象扩散操作符）</a>)。这里将 <code class="highlighter-rouge">state</code> 做了一个复制，然后更新 <code class="highlighter-rouge">sharedSchedule</code> 的值并返回。</p>
+
+<p>你可以看到 Reducer 的结构是多么简单，可读性很强。定义个 <code class="highlighter-rouge">initialState</code>，提供一个函数，处理 <code class="highlighter-rouge">state</code> 和 Action，返回一个新的 <code class="highlighter-rouge">state</code>，就是这样。</p>
+
+<p>在这个函数中，我们不做其他的任何事情，Reducer 的一个至为重要的规则就是，函数应该是 <code class="highlighter-rouge">pure function</code>，即对于一样的参数，一定会有同样的返回值。</p>
+
+<p><a href="http://redux.js.org/docs/basics/Reducers.html#handling-actions">Redux 的文档</a> 的原话是：</p>
+
+<blockquote>
+  <p>“Remember that the reducer must be pure. Given the same arguments, it should calculate the next state and return it. No surprises. No side effects. No API calls. No mutations. Just a calculation.”</p>
+</blockquote>
+
+<p>另外，我们再看看 <code class="highlighter-rouge">js/reducers/notifications.js</code>，这里也有对 <code class="highlighter-rouge">LOGGED_OUT</code> 这个 Action 进行的处理。每个 Reducer 在 Action 被派发后都会被调用，每个 Reducer 只处理自己关心的 <code class="highlighter-rouge">state</code> 树种的那部分 <code class="highlighter-rouge">state</code>。</p>
+
+<h3 id="actions">Actions</h3>
+
+<p>现在让我们看看 login 相关的 Action：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6</pre></td><td class="code"><pre><span class="cm">/* from js/actions/login.js */</span>
+<span class="kd">function</span> <span class="nx">skipLogin</span><span class="p">()</span><span class="err">:</span> <span class="nx">Action</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">type</span><span class="p">:</span> <span class="s1">'SKIPPED_LOGIN'</span><span class="p">,</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>这个是一个非常简单的 <strong>Action creator</strong>，该函数返回的结果是一个真正的 Action。每个 Action 可以只包含一个 <code class="highlighter-rouge">type</code>，Reducer 根据这个 <code class="highlighter-rouge">type</code> 更新 <code class="highlighter-rouge">state</code>。</p>
+
+<p>和 <code class="highlighter-rouge">type</code> 一起，Action 还可以携带一些数据，如：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7</pre></td><td class="code"><pre><span class="cm">/* from js/actions/filter.js */</span>
+<span class="kd">function</span> <span class="nx">applyTopicsFilter</span><span class="p">(</span><span class="nx">topics</span><span class="p">)</span><span class="err">:</span> <span class="nx">Action</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">type</span><span class="p">:</span> <span class="s1">'APPLY_TOPICS_FILTER'</span><span class="p">,</span>
+    <span class="na">topics</span><span class="p">:</span> <span class="nx">topics</span><span class="p">,</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>这里 <strong>Action creator</strong>，接收一个参数并将其插入到 Action 中。</p>
+
+<p>有些 Action creator 会先执行一些逻辑，他们会返回一个函数而不是一个 Action：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre></td><td class="code"><pre><span class="cm">/* from js/actions/login.js */</span>
+<span class="kd">function</span> <span class="nx">logOut</span><span class="p">()</span><span class="err">:</span> <span class="nx">ThunkAction</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="nx">Parse</span><span class="p">.</span><span class="nx">User</span><span class="p">.</span><span class="nx">logOut</span><span class="p">();</span>
+    <span class="nx">FacebookSDK</span><span class="p">.</span><span class="nx">logout</span><span class="p">();</span>
+    <span class="p">...</span>
+
+    <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span>
+      <span class="na">type</span><span class="p">:</span> <span class="s1">'LOGGED_OUT'</span><span class="p">,</span>
+    <span class="p">});</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>在这个例子中，我们使用了一个自定义的 ThunkAction（<a href="http://redux.js.org/docs/recipes/ReducingBoilerplate.html">Redux 建议这样做以减少重复定义</a>），这个 Action creator 返回的函数，执行了 logout 相关的逻辑，然后分发了一个 Action。</p>
+
+<p>注意：这里我们使用了 <code class="highlighter-rouge">=&gt;</code> <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Functions/Arrow_functions">Arrow function syntax（箭头函数语法）</a>。</p>
+
+<h5 id="action">异步 Action</h5>
+
+<p>如果我们和 API 交互，我们需要异步的 Action creators。. Redux 本身有一个 <a href="http://redux.js.org/docs/advanced/AsyncActions.html">相当复杂的异步方式</a>。不过我们使用的是 React Native，我们可以使用 <a href="https://facebook.github.io/react-native/docs/javascript-environment.html#javascript-syntax-transformers">ES7 的 <code class="highlighter-rouge">await</code></a>，这会使得整个流程大大简化：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8</pre></td><td class="code"><pre><span class="cm">/* from js/actions/config.js */</span>
+<span class="nx">async</span> <span class="kd">function</span> <span class="nx">loadConfig</span><span class="p">()</span><span class="err">:</span> <span class="nx">Promise</span><span class="o">&lt;</span><span class="nx">Action</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">config</span> <span class="o">=</span> <span class="nx">await</span> <span class="nx">Parse</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">get</span><span class="p">();</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">type</span><span class="p">:</span> <span class="s1">'LOADED_CONFIG'</span><span class="p">,</span>
+    <span class="nx">config</span><span class="p">,</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>这里，我们调用了一个 API，获取一些配置数据。任何网络 API 的调用都是一个耗时的操作。Action creator 等待结果返回，然后再返回一个 Action。这过程没有阻塞 JavaScript 线程。</p>
+
+<p>这样的异步调用的好处就是，我们在等待 <code class="highlighter-rouge">Parse.Config</code> 返回的时候，其他异步的操作也可以同时进行。我们可以执行一系列的并发操作，而不必相互等待，以提高效率。</p>
+
+<h3 id="section-1">组件绑定</h3>
+
+<p>现在我们在我们 app 的 <code class="highlighter-rouge">setup()</code> 函数中把 Redux 的逻辑和 React 连接起来：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22</pre></td><td class="code"><pre><span class="cm">/* from js/setup.js */</span>
+<span class="kd">function</span> <span class="nx">setup</span><span class="p">()</span><span class="err">:</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+  <span class="c1">// ... 其他的设置逻辑</span>
+
+  <span class="kr">class</span> <span class="nx">Root</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+    <span class="nx">constructor</span><span class="p">()</span> <span class="p">{</span>
+      <span class="kr">super</span><span class="p">();</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="na">store</span><span class="p">:</span> <span class="nx">configureStore</span><span class="p">(),</span>
+      <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="p">(</span>
+        <span class="o">&lt;</span><span class="nx">Provider</span> <span class="nx">store</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">store</span><span class="p">}</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="nx">F8App</span> <span class="o">/&gt;</span>
+        <span class="o">&lt;</span><span class="sr">/Provider</span><span class="err">&gt;
+</span>      <span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="nx">Root</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>我们使用官方的 <a href="https://github.com/reactjs/react-redux">React 和 Redux 之间的绑定</a>，所以在第 18 行，我们可以使用内置的 <a href="http://redux.js.org/docs/basics/UsageWithReact.html#passing-the-store"><code class="highlighter-rouge">&lt;Provider&gt;</code> 组件</a>。 Provider 可以把我们创建的 Store 和任意组件连接。</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13</pre></td><td class="code"><pre><span class="cm">/* from js/F8App.js */</span>
+<span class="kd">var</span> <span class="nx">F8App</span> <span class="o">=</span> <span class="nx">React</span><span class="p">.</span><span class="nx">createClass</span><span class="p">({</span>
+  <span class="c1">// 省略部分代码</span>
+<span class="p">})</span>
+
+<span class="kd">function</span> <span class="nx">select</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">notifications</span><span class="p">:</span> <span class="nx">state</span><span class="p">.</span><span class="nx">notifications</span><span class="p">,</span>
+    <span class="na">isLoggedIn</span><span class="p">:</span> <span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">isLoggedIn</span> <span class="o">||</span> <span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">hasSkippedLogin</span><span class="p">,</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">connect</span><span class="p">(</span><span class="nx">select</span><span class="p">)(</span><span class="nx">F8App</span><span class="p">);</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>上面的代码就是我们 app 的根容器组件 <code class="highlighter-rouge">&lt;F8App&gt;</code>。</p>
+
+<p>在 13 行，我们使用了 React-Redux <a href="https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options"><code class="highlighter-rouge">connect()</code> 函数</a>。<code class="highlighter-rouge">connect()</code> 函数的参数列表中的第一个参数名为 <a href="https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments"><code class="highlighter-rouge">mapStateToProps</code></a> 这个参数是一个函数，当 Store 更新时，这个函数就会被调用。</p>
+
+<p>这里，我们传入的是第 6 行的 <code class="highlighter-rouge">select</code> 函数。这个函数传入的参数是 Store 中的 <code class="highlighter-rouge">state</code>，我们从这个 <code class="highlighter-rouge">state</code> 中提取数据，返回的数据会传入大到 <code class="highlighter-rouge">&lt;F8App&gt;</code> 中去。在这里，我们提取了通知消息相关的数据和登录状态相关的数据。</p>
+
+<p>当 Store 中的数据变化时，<code class="highlighter-rouge">connect()</code> 函数被调用，我们提取的数据会被传入到 <code class="highlighter-rouge">&lt;F8App&gt;</code> 组件中。</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre></td><td class="code"><pre><span class="cm">/* from js/F8App.js */</span>
+<span class="kd">var</span> <span class="nx">F8App</span> <span class="o">=</span> <span class="nx">React</span><span class="p">.</span><span class="nx">createClass</span><span class="p">({</span>
+  <span class="p">...</span>
+  <span class="na">componentDidMount</span><span class="p">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 省略代码</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">notifications</span><span class="p">.</span><span class="nx">enabled</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">notifications</span><span class="p">.</span><span class="nx">registered</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 省略代码</span>
+    <span class="p">}</span>
+    <span class="c1">// 省略代码</span>
+  <span class="p">},</span>
+  <span class="c1">// 省略代码</span>
+<span class="p">})</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>现在，<code class="highlighter-rouge">&lt;F8App&gt;</code> 中第 6 行，我们可以得到最新的数据了，另外数据更新时，<code class="highlighter-rouge">render()</code> 方法也会被重新调用。下面我们看看如何在组件内触发一个 Action。</p>
+
+<h5 id="action-1">组件内触发 Action</h5>
+
+<p>为了看清 Action 和组件是如何连接起来的，我们可以看看 <code class="highlighter-rouge">&lt;GeneralScheduleView&gt;</code> ，组件看起来像这样，可以切换 DAY 1， DAY 2，DAY 3。</p>
+
+<p><img src="/static/images/iOS vs Android Segmented Controls@3x.png" alt="Screenshot of segmented controls" /></p>
+
+<p>主要代码如下：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65</pre></td><td class="code"><pre><span class="cm">/* from js/tabs/schedule/GeneralScheduleView.js */</span>
+<span class="kd">var</span> <span class="p">{</span><span class="nx">switchDay</span><span class="p">}</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../../actions'</span><span class="p">);</span>
+
+<span class="kr">class</span> <span class="nx">GeneralScheduleView</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+  <span class="nl">props</span><span class="p">:</span> <span class="nx">Props</span><span class="p">;</span>
+
+  <span class="nx">constructor</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">super</span><span class="p">(</span><span class="nx">props</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">renderStickyHeader</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">renderStickyHeader</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">switchDay</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">switchDay</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="nx">ListContainer</span>
+        <span class="nx">title</span><span class="o">=</span><span class="s2">"Schedule"</span>
+        <span class="nx">backgroundImage</span><span class="o">=</span><span class="p">{</span><span class="nx">require</span><span class="p">(</span><span class="s1">'./img/schedule-background.png'</span><span class="p">)}</span>
+        <span class="nx">backgroundShift</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">day</span> <span class="o">-</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="nx">backgroundColor</span><span class="o">=</span><span class="p">{</span><span class="s1">'#5597B8'</span><span class="p">}</span>
+        <span class="nx">data</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">data</span><span class="p">}</span>
+        <span class="nx">renderStickyHeader</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">renderStickyHeader</span><span class="p">}</span>
+        <span class="p">...</span>
+      <span class="sr">/</span><span class="err">&gt;
+</span>    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="p">...</span>
+
+  <span class="nx">renderStickyHeader</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="nx">View</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">F8SegmentedControl</span>
+          <span class="nx">values</span><span class="o">=</span><span class="p">{[</span><span class="s1">'Day 1'</span><span class="p">,</span> <span class="s1">'Day 2'</span><span class="p">]}</span>
+          <span class="nx">selectedIndex</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">day</span> <span class="o">-</span> <span class="mi">1</span><span class="p">}</span>
+          <span class="nx">selectionColor</span><span class="o">=</span><span class="s2">"#51CDDA"</span>
+          <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">switchDay</span><span class="p">}</span>
+        <span class="sr">/</span><span class="err">&gt;
+</span>        <span class="p">...</span>
+      <span class="o">&lt;</span><span class="sr">/View</span><span class="err">&gt;
+</span>    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="p">...</span>
+
+  <span class="nx">switchDay</span><span class="p">(</span><span class="nx">page</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">switchDay</span><span class="p">(</span><span class="nx">page</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">select</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">day</span><span class="p">:</span> <span class="nx">state</span><span class="p">.</span><span class="nx">navigation</span><span class="p">.</span><span class="nx">day</span><span class="p">,</span>
+    <span class="na">filter</span><span class="p">:</span> <span class="nx">state</span><span class="p">.</span><span class="nx">filter</span><span class="p">,</span>
+    <span class="na">sessions</span><span class="p">:</span> <span class="nx">data</span><span class="p">(</span><span class="nx">state</span><span class="p">),</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">mapDispatchToProps</span><span class="p">(</span><span class="nx">dispatch</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">switchDay</span><span class="p">:</span> <span class="p">(</span><span class="nx">day</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">dispatch</span><span class="p">(</span><span class="nx">switchDay</span><span class="p">(</span><span class="nx">day</span><span class="p">)),</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">connect</span><span class="p">(</span><span class="nx">select</span><span class="p">,</span> <span class="nx">mapDispatchToProps</span><span class="p">)(</span><span class="nx">GeneralScheduleView</span><span class="p">);</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>为了说明问题，我们省略了部分细节。</p>
+
+<p>在第 2 行，我们引入了 <code class="highlighter-rouge">switchDay()</code> 函数，这个函数实际在 <code class="highlighter-rouge">js/actions/navigation.js</code> 中：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5</pre></td><td class="code"><pre><span class="cm">/* from js/actions/navigation.js */</span>
+  <span class="nl">switchDay</span><span class="p">:</span> <span class="p">(</span><span class="nx">day</span><span class="p">)</span><span class="err">:</span> <span class="nx">Action</span> <span class="o">=&gt;</span> <span class="p">({</span>
+    <span class="na">type</span><span class="p">:</span> <span class="s1">'SWITCH_DAY'</span><span class="p">,</span>
+    <span class="nx">day</span><span class="p">,</span>
+  <span class="p">})</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>这个 Action creator 简单返回一个 Action 对象，带上了 <code class="highlighter-rouge">day</code> 这个变量。</p>
+
+<p>在 65 行，我们同样使用了 <code class="highlighter-rouge">connect()</code>，不过稍有不同的是，第二个参数，我们传入了一个函数 <a href="https://github.com/reactjs/react-redux/blob/master/docs/api.md#arguments"><code class="highlighter-rouge">mapDispatchToProps</code></a>。</p>
+
+<p>当点击 “DAY 1” 的时候，<code class="highlighter-rouge">renderStickyHeader()</code> 中的 <code class="highlighter-rouge">onChange()</code> 会被触发，第 46 行的 <code class="highlighter-rouge">switchDay</code> 被调用，<code class="highlighter-rouge">props</code> 的 <code class="highlighter-rouge">switchDay</code> 被 <code class="highlighter-rouge">mapDispatchToProps</code> 映射到了 61 行的函数上。这个函数分发第 2 行引入的 <code class="highlighter-rouge">switchDay()</code> 返回的 Action。</p>
+
+<p>在 Reducer 中，将修改过后的时间值 <code class="highlighter-rouge">day</code> 更新到 <code class="highlighter-rouge">state</code> 中：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4</pre></td><td class="code"><pre><span class="cm">/* from js/reducers/navigation.js */</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">'SWITCH_DAY'</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="na">day</span><span class="p">:</span> <span class="nx">action</span><span class="p">.</span><span class="nx">day</span><span class="p">};</span>
+  <span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>因为 <code class="highlighter-rouge">&lt;GeneralScheduleView&gt;</code> 订阅了 <code class="highlighter-rouge">state</code>，一旦 <code class="highlighter-rouge">state</code> 发生变化，组件就更新了。</p>
+
+<h3 id="parse-server">Parse Server</h3>
+
+<p>教程直接到目前为止，相信你已经得到不少新的信息了。现在，再让我们来看看 React Native 和 Parse Server 是如何连接的：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4</pre></td><td class="code"><pre>  <span class="nx">Parse</span><span class="p">.</span><span class="nx">initialize</span><span class="p">(</span>
+    <span class="s1">'PARSE_APP_ID'</span><span class="p">,</span>
+  <span class="p">);</span>
+  <span class="nx">Parse</span><span class="p">.</span><span class="nx">serverURL</span> <span class="o">=</span> <span class="s1">'http://exampleparseserver.com:1337/parse'</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>That’s it, we’re connected to the Parse API inside React Native.</p>
+
+<p>是的，由于我们使用了 <a href="https://github.com/ParsePlatform/ParseReact">Parse + React</a> SDK （在 <code class="highlighter-rouge">parse/react-native</code> 包中），整个过程就是这么简单。</p>
+
+<h5 id="parse--action">Parse 和 Action</h5>
+
+<p>我们在各个 Action 中要做很多查询，这些 Action creator 几乎是一样的，为了减少重复代码，我们创建了一个 base Action creator：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9</pre></td><td class="code"><pre><span class="cm">/* from js/actions/parse.js */</span>
+<span class="kd">function</span> <span class="nx">loadParseQuery</span><span class="p">(</span><span class="nx">type</span><span class="err">:</span> <span class="nx">string</span><span class="p">,</span> <span class="nx">query</span><span class="err">:</span> <span class="nx">Parse</span><span class="p">.</span><span class="nx">Query</span><span class="p">)</span><span class="err">:</span> <span class="nx">ThunkAction</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">query</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span>
+      <span class="na">success</span><span class="p">:</span> <span class="p">(</span><span class="nx">list</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">dispatch</span><span class="p">(({</span><span class="nx">type</span><span class="p">,</span> <span class="nx">list</span><span class="p">}:</span> <span class="nx">any</span><span class="p">)),</span>
+      <span class="na">error</span><span class="p">:</span> <span class="nx">logError</span><span class="p">,</span>
+    <span class="p">});</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>基于这个 base Action creator，我们创建具体的 Action creator：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2</pre></td><td class="code"><pre>  <span class="nx">loadMaps</span><span class="err">:</span> <span class="p">()</span><span class="err">:</span> <span class="nx">ThunkAction</span> <span class="o">=&gt;</span>
+    <span class="nx">loadParseQuery</span><span class="p">(</span><span class="s1">'LOADED_MAPS'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Parse</span><span class="p">.</span><span class="nx">Query</span><span class="p">(</span><span class="nx">Maps</span><span class="p">)),</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p><code class="highlighter-rouge">loadMaps()</code> 成了一个 Action creator，这个 creator 简单地运行一个 Parse Query，加载完所有的地图数据之后将数据分发。</p>
+
+<p>在 <code class="highlighter-rouge">js/F8App.js</code> 中的 <code class="highlighter-rouge">componentDidMount()</code> 中你可以看到 app 中的所有 Parse 和 Action。这也就是说，在应用第一次运行的时候所有 Parse 的数据就加载进来了。</p>
+
+<h5 id="parse--reducer">Parse 和 Reducer</h5>
+
+<p>我们已经缩减了 Action 的代码冗余，现在我们也想缩减 Reducer 的代码冗余。这些 Reducer 会接收一系列来自于 Parse API 的数据，并把这些数据更新到 <code class="highlighter-rouge">state</code> 树中。我们也创建一个 base Reducer：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13</pre></td><td class="code"><pre><span class="cm">/* from js/reducers/createParseReducer.js */</span>
+<span class="kd">function</span> <span class="nx">createParseReducer</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="nx">type</span><span class="err">:</span> <span class="nx">string</span><span class="p">,</span>
+  <span class="nx">convert</span><span class="err">:</span> <span class="nx">Convert</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span>
+<span class="p">)</span><span class="err">:</span> <span class="nx">Reducer</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="na">state</span><span class="p">:</span> <span class="p">?</span><span class="nb">Array</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">action</span><span class="p">:</span> <span class="nx">Action</span><span class="p">):</span> <span class="nb">Array</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span> <span class="o">===</span> <span class="nx">type</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// Flow can't guarantee {type, list} is a valid action</span>
+      <span class="k">return</span> <span class="p">(</span><span class="na">action</span><span class="p">:</span> <span class="nx">any</span><span class="p">).</span><span class="nx">list</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">convert</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">state</span> <span class="o">||</span> <span class="p">[];</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>这是一个很简单的 Reducer，当然，其中糅杂了很多 Flow 的类型注解，我们看看基于这个 base Reducer 派生出来的具体的 Reducer 是什么样的：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre></td><td class="code"><pre><span class="cm">/* from js/reducers/faqs.js */</span>
+<span class="kr">const</span> <span class="nx">createParseReducer</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./createParseReducer'</span><span class="p">);</span>
+
+<span class="kr">export</span> <span class="nx">type</span> <span class="nx">FAQ</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">id</span><span class="p">:</span> <span class="nx">string</span><span class="p">;</span>
+  <span class="nl">question</span><span class="p">:</span> <span class="nx">string</span><span class="p">;</span>
+  <span class="nl">answer</span><span class="p">:</span> <span class="nx">string</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kd">function</span> <span class="nx">fromParseObject</span><span class="p">(</span><span class="na">map</span><span class="p">:</span> <span class="nb">Object</span><span class="p">):</span> <span class="nx">FAQ</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">id</span><span class="p">:</span> <span class="nx">map</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span>
+    <span class="na">question</span><span class="p">:</span> <span class="nx">map</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'question'</span><span class="p">),</span>
+    <span class="na">answer</span><span class="p">:</span> <span class="nx">map</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'answer'</span><span class="p">),</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">createParseReducer</span><span class="p">(</span><span class="s1">'LOADED_FAQS'</span><span class="p">,</span> <span class="nx">fromParseObject</span><span class="p">);</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>我们没有简单地重复 <code class="highlighter-rouge">createParseReducer</code> 中的代码，我们把一个映射 API 数据到 <code class="highlighter-rouge">state</code> 的函数传入到了其中，达到了缩减代码的目的。</p>
+
+<p>好了，现在我们有一个结构良好，数据流简单易懂，和 Parse Server 串联起来了的 app 了。并且，我们还有了离线数据存储的支持。</p>
+
+
+    
+  </article>
+  
+
+
+
+
+
+
+
+
+<div class="postPagination">
+
+<div class="pagingLink previousLink">
+  <a href="/tutorials/building-the-f8-app/design/">
+    <i>&lsaquo;</i>
+    <span>应用的多平台设计</span>
+  </a>
+</div>
+
+
+
+<div class="pagingLink nextLink">
+  <a href="/tutorials/building-the-f8-app/testing/">
+    <span>测试</span>
+    <i>&rsaquo;</i>
+  </a>
+</div>
+
+</div>
+
+
+
+
+</div>
+
+    <div>
+</div>
+<nav class='toc' id="doc_nav"></nav>
+<script>
+  
+  var docnavData = [
+    {
+      group     : "构建 F8 2016 App",
+      items     : [
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/planning/",
+          title : "App 的筹备",
+          type: "",
+          partlabel : "第一章",
+          url : "/tutorials/building-the-f8-app/planning/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/design/",
+          title : "应用的多平台设计",
+          type: "",
+          partlabel : "第二章",
+          url : "/tutorials/building-the-f8-app/design/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/data/",
+          title : "数据集成",
+          type: "",
+          partlabel : "第三章",
+          url : "/tutorials/building-the-f8-app/data/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/testing/",
+          title : "测试",
+          type: "",
+          partlabel : "第四章",
+          url : "/tutorials/building-the-f8-app/testing/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/local-setup/",
+          title : "本地设置运行 App",
+          type: "appendix",
+          partlabel : "附录 1",
+          url : "/tutorials/building-the-f8-app/local-setup/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/relay/",
+          title : "使用 Relay 和 GraphQL",
+          type: "appendix",
+          partlabel : "附录 2",
+          url : "/tutorials/building-the-f8-app/relay/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/windows/",
+          title : "移植 F8 App 到 Windows",
+          type: "appendix",
+          partlabel : "附录 3",
+          url : "/tutorials/building-the-f8-app/windows/",
+        }
+        
+      ],
+    },
+  ];
+</script>
+<script type="text/javascript">
+  var DocNav = React.createClass({displayName: "DocNav",
+    getInitialState: function() {
+      return {
+        toggleActive: false,
+      };
+    },
+    getDefaultProps: function() {
+      return {
+        currentDoc: "数据集成",
+        currentGroup: "构建 F8 2016 App",
+        data: docnavData,
+      }
+    },
+    handleSlide: function(id) {
+      this.setState({
+        toggleActive: !this.state.toggleActive,
+      });
+    },
+    render: function() {
+      var classes = React.addons.classSet({
+        'navToggle': true,
+        'navToggleActive': this.state.toggleActive,
+      });
+      var navClasses = React.addons.classSet({
+        'toggleNav': true,
+        'toggleNavActive': this.state.toggleActive,
+      });
+      return (
+        React.createElement("div", {className: navClasses},
+          React.createElement("section", null,
+            this.props.data.map(this.renderNavGroups)
+          ),
+          React.createElement("div", {className: classes, onClick: this.handleSlide},
+            React.createElement("span", null, "目录"), React.createElement("i", null, String.fromCharCode(43))
+          )
+        )
+      );
+    },
+    renderNavGroups: function(child, index) {
+      var classes = React.addons.classSet({
+        'navGroup': true,
+        'navGroupActive': this.props.currentGroup === child.group,
+      });
+      return (
+        React.createElement("div", {className: classes, key: index},
+          React.createElement("h3", null, "目录"),
+          React.createElement("ul", null,
+            child.items.map(this.renderNavItems)
+          )
+        )
+      );
+    },
+    renderNavItems: function(child, index) {
+      var itemClasses = React.addons.classSet({
+        'navListItem': true,
+        'navListItemActive': this.props.currentDoc === child.title,
+        'navListItemAppendix': child.type === 'appendix',
+      });
+      var classes = React.addons.classSet({
+        'navItem': true,
+        'navItemActive': this.props.currentDoc === child.title,
+      });
+      return (
+        React.createElement("li", {className: itemClasses, key: index}, React.createElement("a", {className: classes, href: child.url},  child.partlabel +': '+ child.title))
+      );
+    },
+  });
+
+  function docNavRender(docnavData) {
+    React.render(
+      React.createElement(DocNav, {data: docnavData}),
+      document.getElementById('doc_nav')
+    );
+  }
+  docNavRender(docnavData);
+</script>
+
+  </div>
+</div>
+
+
+      <div class="footerContainer">
+  <div id="footer_wrap" class="wrapper footerWrapper">
+    <div class="footerBlocks">
+      <div id="fb_oss" class="footerSection fbOpenSourceFooter">
+          <svg class="facebookOSSLogoSvg" viewBox="0 0 1133.9 1133.9" x="0px" y="0px">
+            <g>
+              <path class="logoRing outerRing" d="M 498.3 3.7 c 153.6 88.9 307.3 177.7 461.1 266.2 c 7.6 4.4 10.3 9.1 10.3 17.8 c -0.3 179.1 -0.2 358.3 0 537.4 c 0 8.1 -2.4 12.8 -9.7 17.1 c -154.5 88.9 -308.8 178.1 -462.9 267.5 c -9 5.2 -15.5 5.3 -24.6 0.1 c -153.9 -89.2 -307.9 -178 -462.1 -266.8 C 3 838.8 0 833.9 0 825.1 c 0.3 -179.1 0.2 -358.3 0 -537.4 c 0 -8.6 2.6 -13.6 10.2 -18 C 164.4 180.9 318.4 92 472.4 3 C 477 -1.5 494.3 -0.7 498.3 3.7 Z M 48.8 555.3 c 0 79.9 0.2 159.9 -0.2 239.8 c -0.1 10 3 15.6 11.7 20.6 c 137.2 78.8 274.2 157.8 411 237.3 c 9.9 5.7 17 5.7 26.8 0.1 c 137.5 -79.8 275.2 -159.2 412.9 -238.5 c 7.4 -4.3 10.5 -8.9 10.5 -17.8 c -0.3 -160.2 -0.3 -320.5 0 -480.7 c 0 -8.8 -2.8 -13.6 -10.3 -18 C 772.1 218 633.1 137.8 494.2 57.4 c -6.5 -3.8 -11.5 -4.5 -18.5 -0.5 C 336.8 137.4 197.9 217.7 58.8 297.7 c -7.7 4.4 -10.2 9.2 -10.2 17.9 C 48.9 395.5 48.8 475.4 48.8 555.3 Z" />
+              <path class="logoRing middleRing" d="M 184.4 555.9 c 0 -33.3 -1 -66.7 0.3 -100 c 1.9 -48 24.1 -86 64.7 -110.9 c 54.8 -33.6 110.7 -65.5 167 -96.6 c 45.7 -25.2 92.9 -24.7 138.6 1 c 54.4 30.6 108.7 61.5 162.2 93.7 c 44 26.5 67.3 66.8 68 118.4 c 0.9 63.2 0.9 126.5 0 189.7 c -0.7 50.6 -23.4 90.7 -66.6 116.9 c -55 33.4 -110.8 65.4 -167.1 96.5 c -43.4 24 -89 24.2 -132.3 0.5 c -57.5 -31.3 -114.2 -64 -170 -98.3 c -41 -25.1 -62.9 -63.7 -64.5 -112.2 C 183.5 621.9 184.3 588.9 184.4 555.9 Z M 232.9 556.3 c 0 29.5 0.5 59.1 -0.1 88.6 c -0.8 39.2 16.9 67.1 50.2 86.2 c 51.2 29.4 102.2 59.2 153.4 88.4 c 31.4 17.9 63.6 18.3 95 0.6 c 53.7 -30.3 107.1 -61.2 160.3 -92.5 c 29.7 -17.5 45 -44.5 45.3 -78.8 c 0.6 -61.7 0.5 -123.5 0 -185.2 c -0.3 -34.4 -15.3 -61.5 -44.9 -79 C 637.7 352.6 583 320.8 527.9 290 c -27.5 -15.4 -57.2 -16.1 -84.7 -0.7 c -56.9 31.6 -113.4 64 -169.1 97.6 c -26.4 15.9 -40.7 41.3 -41.1 72.9 C 232.6 491.9 232.9 524.1 232.9 556.3 Z" />
+              <path class="logoRing innerRing" d="M 484.9 424.4 c 69.8 -2.8 133.2 57.8 132.6 132 C 617 630 558.5 688.7 484.9 689.1 c -75.1 0.4 -132.6 -63.6 -132.7 -132.7 C 352.1 485 413.4 421.5 484.9 424.4 Z M 401.3 556.7 c -3.4 37.2 30.5 83.6 83 84.1 c 46.6 0.4 84.8 -37.6 84.9 -84 c 0.1 -46.6 -37.2 -84.4 -84.2 -84.6 C 432.2 472.1 397.9 518.3 401.3 556.7 Z" />
+            </g>
+          </svg>
+        <h2><a class="footerLink" href="https://code.facebook.com/projects/" target="_blank">Facebook Open Source</a></h2>
+      </div>
+      <div class="footerSection rightAlign">
+        <a class="footerLink" href="https://github.com/liaohuqiu/f8-app-tutorial-cn" target="_blank">本文档 GitHub 项目</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43024238-14', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+    </div>
+  </body>
+
+</html>

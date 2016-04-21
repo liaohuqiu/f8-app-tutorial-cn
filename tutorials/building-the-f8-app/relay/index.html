@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta property="og:url" content="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/relay/" />
+	<meta property="og:site_name" content="Facebook React Native 教程"/>
+	<meta property="og:title" content="Facebook React Native 教程" />
+	<meta property="og:image" content="http://f8-app-tutorial-cn.liaohuqiu.net/static/og_image.png" />
+	<meta property="og:description" content="Facebook 2016 年 F8 app 的中文教程。React Native 的官方最佳实践，应该是最好的 React Native 学习资料了。从服务器端到 App，包括 Redux，Relay，GraphQL。教程涵盖：如何进行 app 技术选型，如何做跨平台设计，如何做 React Native 的测试。
+" />
+  <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css">
+  <link rel="stylesheet" type="text/css" media="screen" href="//cdn.jsdelivr.net/font-hack/2.019/css/hack.min.css">
+
+  <link rel="icon" href="static/favicon_junction.png" type="image/x-icon">
+
+  <base href="/" />
+
+  <script src="https://fb.me/react-with-addons-0.13.1.min.js"></script>
+
+  <title>使用 Relay 和 GraphQL &mdash; Facebook React Native 教程</title>
+  <meta name="description" content="在开始筹备这个 app，考虑数据层的选择时，我们对比了 Redux 和 Facebook 的另一个开源框架 Relay，最后选择了前者。">
+
+  <link rel="canonical" href="http://f8-app-tutorial-cn.liaohuqiu.net/tutorials/building-the-f8-app/relay/">
+  <link rel="alternate" type="application/rss+xml" title="Facebook React Native 教程" href="http://f8-app-tutorial-cn.liaohuqiu.net/feed/" />
+</head>
+
+  <body>
+    <div id="fixed_header" class="fixedHeaderContainer visible">
+  <header>
+    <a href="/">
+      <img src="/static/logo_square_small.png">
+      <h2>构建 Facebook F8 2016 App / React Native 开发指南</h2>
+    </a>
+
+    <div class="navigationWrapper navigationFull" id="flat_nav">
+      <nav class="navigation">
+        <ul>
+          
+        </ul>
+      </nav>
+    </div>
+  </header>
+</div>
+
+    <div class="navPusher">
+      
+<div class="mainContainer blogContainer postContainer">
+  <div id="main_wrap" class="wrapper mainWrapper">
+    
+<div class="post">
+  <header class="post-header">
+    <h2 class="postSubtitle">
+      <span>构建 F8 2016 App: 附录 2</span>
+      使用 Relay 和 GraphQL
+    </h2>
+    <div class="postPlugins">
+      <div class="pluginBlock">
+        <a href="https://twitter.com/share" class="twitter-share-button" data-hashtags="使用Relay和GraphQL">Tweet</a>
+      </div>
+      <div class="fb-like" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+    </div>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+    <script>
+      window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '',
+        xfbml      : true,
+        version    : 'v2.3'
+      });
+      };
+
+      (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {return;}
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+  </header>
+
+  <article class="post-content">
+   
+      <p>在开始筹备这个 app，<a href="tutorials/building-the-f8-app/planning/#data-access-with-react-native">考虑数据层的选择时</a>，我们对比了 <a href="https://github.com/rackt/redux">Redux</a> 和 Facebook 的另一个开源框架 <a href="https://facebook.github.io/relay/">Relay</a>，最后选择了前者。</p>
+
+<p>那时因为 Redux 的实现较为简单，和 Parse 的数据的集成也容易一些。现在，我们项目上线了发布了，我们想再回顾一下当时的选择，看看 Relay 能在我们的 app 中怎么用。</p>
+
+<h3 id="section">逐步地演变</h3>
+
+<p>传统的 app 开发，变换一个数据层的选择，通常会导致整个 app 的改动，</p>
+
+<p>React Native 不太一样，我们可以保持现有的数据层实现：Redux， Parse，以及相关的绑定。然后在某个独立的 View 中，引入新的数据层。我们可以仅仅改动一部分，其他部分保持不动。</p>
+
+<p>持续开发，持续改进，大大地减少维护和更新的开销，这些好处是值得大书特书的。</p>
+
+<p>现在我们看看使用 Relay + GraphQL 做数据模型和 Redux 有什么区别。</p>
+
+<h3 id="relay--graphql">Relay 和 GraphQL</h3>
+
+<p><a href="https://facebook.github.io/relay/">Relay</a> 是 app 中的一个数据框架，<a href="http://graphql.org/">GraphQL</a> 是 Relay 用来做数据表示的查询语言。GraphQL 同时还有一个 npm 包，可在服务器上运行，提供可以和 Relay 交互的数据源（关于 GraphQL 的具体设置细节教程，我们后续会更新，敬请期待）。</p>
+
+<p>Relay 不是从 Flux 架构分化来了，它只和 GraphQL 有关。这也就是说，这和 Redux 的模型有着巨大的区别。我们在 <a href="tutorials/building-the-f8-app/data/">数据集成章节</a> 提到的 Store/Reducer/Component 的交互，在 Relay 中就不存在了。用 Relay 做数据集成时，需要用另外一种方式，我们之前要做的很多工作都可以不用了。</p>
+
+<p>在 Relay + GraphQL 的模型中，每个组件指定自己需要的数据。Relay 调用数据，数据更新时，提供给组件最新的数据，并在客户端做缓存。app 需要更新数据时，在 Action 中创建一个 <a href="https://facebook.github.io/relay/docs/guides-mutations.html#content">GraphQL 变更</a>，这和 Redux 类似。</p>
+
+<h3 id="f8-app-">F8 App 中的例子</h3>
+
+<p>因为在 React Native 中，我们可以逐步地更改我们 app 中的一些小地方，为了验证可以将 Redux 更换成 Relay 这个概念，我们选择了 F8 app 中的 Info View，如下：</p>
+
+<p><img src="static/images/info_view.png" alt="Info view of F8 iOS app" /></p>
+
+<p>这个 View 和 其他部分几乎是完全没关系的，有大量的非交互的内容，是做尝试的不二之选。</p>
+
+<p>这个 View 包含了一个非常简单的 <code class="highlighter-rouge">&lt;InfoList&gt;</code>，如下：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19</pre></td><td class="code"><pre><span class="cm">/* from js/tabs/info/F8InfoView.js */</span>
+<span class="kd">function</span> <span class="nx">InfoList</span><span class="p">({</span><span class="na">viewer</span><span class="p">:</span> <span class="p">{</span><span class="nx">config</span><span class="p">,</span> <span class="nx">faqs</span><span class="p">,</span> <span class="nx">pages</span><span class="p">},</span> <span class="p">...</span><span class="nx">props</span><span class="p">})</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span>
+    <span class="o">&lt;</span><span class="nx">PureListView</span>
+      <span class="nx">renderEmptyList</span><span class="o">=</span><span class="p">{()</span> <span class="o">=&gt;</span> <span class="p">(</span>
+        <span class="o">&lt;</span><span class="nx">View</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="nx">WiFiDetails</span>
+            <span class="nx">network</span><span class="o">=</span><span class="p">{</span><span class="nx">config</span><span class="p">.</span><span class="nx">wifiNetwork</span><span class="p">}</span>
+            <span class="nx">password</span><span class="o">=</span><span class="p">{</span><span class="nx">config</span><span class="p">.</span><span class="nx">wifiPassword</span><span class="p">}</span>
+          <span class="sr">/</span><span class="err">&gt;
+</span>          <span class="o">&lt;</span><span class="nx">CommonQuestions</span> <span class="nx">faqs</span><span class="o">=</span><span class="p">{</span><span class="nx">faqs</span><span class="p">}</span> <span class="sr">/</span><span class="err">&gt;
+</span>          <span class="o">&lt;</span><span class="nx">LinksList</span> <span class="nx">title</span><span class="o">=</span><span class="s2">"Facebook pages"</span> <span class="nx">links</span><span class="o">=</span><span class="p">{</span><span class="nx">pages</span><span class="p">}</span> <span class="sr">/</span><span class="err">&gt;
+</span>          <span class="o">&lt;</span><span class="nx">LinksList</span> <span class="nx">title</span><span class="o">=</span><span class="s2">"Facebook policies"</span> <span class="nx">links</span><span class="o">=</span><span class="p">{</span><span class="nx">POLICIES_LINKS</span><span class="p">}</span> <span class="sr">/</span><span class="err">&gt;
+</span>        <span class="o">&lt;</span><span class="sr">/View</span><span class="err">&gt;
+</span>      <span class="p">)}</span>
+      <span class="p">{...</span><span class="nx">props</span><span class="p">}</span>
+    <span class="sr">/</span><span class="err">&gt;
+</span>  <span class="p">);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>这个是一个非常普通的布局，里面嵌套了另外一些布局，看起来普普通通，但是其中的 <code class="highlighter-rouge">props</code> 以及其他参数是哪来的呢？在同一个文件中，我们有一段 GraphQL 相关的代码：</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22</pre></td><td class="code"><pre><span class="cm">/* from js/tabs/info/F8InfoView.js */</span>
+<span class="nx">InfoList</span> <span class="o">=</span> <span class="nx">Relay</span><span class="p">.</span><span class="nx">createContainer</span><span class="p">(</span><span class="nx">InfoList</span><span class="p">,</span> <span class="p">{</span>
+  <span class="na">fragments</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">viewer</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">Relay</span><span class="p">.</span><span class="nx">QL</span><span class="err">`</span>
+      <span class="nx">fragment</span> <span class="nx">on</span> <span class="nx">User</span> <span class="p">{</span>
+        <span class="nx">config</span> <span class="p">{</span>
+          <span class="nx">wifiNetwork</span>
+          <span class="nx">wifiPassword</span>
+        <span class="p">}</span>
+        <span class="nx">faqs</span> <span class="p">{</span>
+          <span class="nx">question</span>
+          <span class="nx">answer</span>
+        <span class="p">}</span>
+        <span class="nx">pages</span> <span class="p">{</span>
+          <span class="nx">title</span>
+          <span class="nx">url</span>
+          <span class="nx">logo</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="err">`</span><span class="p">,</span>
+  <span class="p">},</span>
+<span class="p">});</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>我们用一段 GraphQL 来定义 <code class="highlighter-rouge">&lt;InfoList&gt;</code> 组件显示时需要的数据，这个和 GraphQL server 上的 GraphQL 对象结构是一致的。</p>
+
+<div class="highlighter-rouge"><div class="rougeHighlight"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25</pre></td><td class="code"><pre><span class="cm">/* from server/schema/schema.js */</span>
+<span class="kd">var</span> <span class="nx">F8UserType</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">GraphQLObjectType</span><span class="p">({</span>
+  <span class="na">name</span><span class="p">:</span> <span class="s1">'User'</span><span class="p">,</span>
+  <span class="na">description</span><span class="p">:</span> <span class="s1">'A person who uses our app'</span><span class="p">,</span>
+  <span class="na">fields</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">({</span>
+    <span class="na">id</span><span class="p">:</span> <span class="nx">globalIdField</span><span class="p">(</span><span class="s1">'User'</span><span class="p">),</span>
+    <span class="na">name</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">type</span><span class="p">:</span> <span class="nx">GraphQLString</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+    <span class="na">faqs</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">type</span><span class="p">:</span> <span class="k">new</span> <span class="nx">GraphQLList</span><span class="p">(</span><span class="nx">F8FAQType</span><span class="p">),</span>
+      <span class="na">resolve</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="k">new</span> <span class="nx">Parse</span><span class="p">.</span><span class="nx">Query</span><span class="p">(</span><span class="nx">FAQ</span><span class="p">).</span><span class="nx">find</span><span class="p">(),</span>
+    <span class="p">},</span>
+    <span class="na">pages</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">type</span><span class="p">:</span> <span class="k">new</span> <span class="nx">GraphQLList</span><span class="p">(</span><span class="nx">F8PageType</span><span class="p">),</span>
+      <span class="na">resolve</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="k">new</span> <span class="nx">Parse</span><span class="p">.</span><span class="nx">Query</span><span class="p">(</span><span class="nx">Page</span><span class="p">).</span><span class="nx">find</span><span class="p">(),</span>
+    <span class="p">},</span>
+    <span class="na">config</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">type</span><span class="p">:</span> <span class="nx">F8ConfigType</span><span class="p">,</span>
+      <span class="na">resolve</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="nx">Parse</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">get</span><span class="p">(),</span>
+    <span class="p">}</span>
+  <span class="p">}),</span>
+  <span class="p">...</span>
+<span class="p">});</span>
+</pre></td></tr></tbody></table>
+</div>
+</div>
+
+<p>你可以看到，GraphQL server 是如何取数据的，Relay 根据定义去取这些数据。当数据准备完成时，使用做为 <code class="highlighter-rouge">viewer</code> 参数传入到 <code class="highlighter-rouge">&lt;InfoList&gt;</code> 中，同样使用 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment">destructuring assignments（解构赋值）</a> 创建 <code class="highlighter-rouge">config</code>,<code class="highlighter-rouge">faqs</code>,<code class="highlighter-rouge">pages</code> 等变量，在组件内使用。</p>
+
+<p>幸亏 Relay 内置的逻辑，我们不需要考虑到数据订阅，数据缓存之类的事情，我们只需要告诉 Relay 我们的组件需要什么样的数据，然后使用 React 标准的方式来写组件就好了。GraphQL server 的设置好了之后，我们所要做的，也确实就这些了。</p>
+
+<p>在我们这个 view 中，我们没有数据变更，如果你想了解关于数据变更方便的细节，你可以阅读 <a href="https://facebook.github.io/relay/docs/guides-mutations.html#content">Relay 的数据变更相关的文档</a>。</p>
+
+    
+  </article>
+  
+
+
+
+
+
+
+
+
+<div class="postPagination">
+
+<div class="pagingLink previousLink">
+  <a href="/tutorials/building-the-f8-app/local-setup/">
+    <i>&lsaquo;</i>
+    <span>本地设置运行 App</span>
+  </a>
+</div>
+
+
+
+<div class="pagingLink nextLink">
+  <a href="/tutorials/building-the-f8-app/windows/">
+    <span>移植 F8 App 到 Windows</span>
+    <i>&rsaquo;</i>
+  </a>
+</div>
+
+</div>
+
+
+
+
+</div>
+
+    <div>
+</div>
+<nav class='toc' id="doc_nav"></nav>
+<script>
+  
+  var docnavData = [
+    {
+      group     : "构建 F8 2016 App",
+      items     : [
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/planning/",
+          title : "App 的筹备",
+          type: "",
+          partlabel : "第一章",
+          url : "/tutorials/building-the-f8-app/planning/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/design/",
+          title : "应用的多平台设计",
+          type: "",
+          partlabel : "第二章",
+          url : "/tutorials/building-the-f8-app/design/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/data/",
+          title : "数据集成",
+          type: "",
+          partlabel : "第三章",
+          url : "/tutorials/building-the-f8-app/data/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/testing/",
+          title : "测试",
+          type: "",
+          partlabel : "第四章",
+          url : "/tutorials/building-the-f8-app/testing/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/local-setup/",
+          title : "本地设置运行 App",
+          type: "appendix",
+          partlabel : "附录 1",
+          url : "/tutorials/building-the-f8-app/local-setup/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/relay/",
+          title : "使用 Relay 和 GraphQL",
+          type: "appendix",
+          partlabel : "附录 2",
+          url : "/tutorials/building-the-f8-app/relay/",
+        },
+        
+        
+        {
+          key : "/tutorials/building-the-f8-app/windows/",
+          title : "移植 F8 App 到 Windows",
+          type: "appendix",
+          partlabel : "附录 3",
+          url : "/tutorials/building-the-f8-app/windows/",
+        }
+        
+      ],
+    },
+  ];
+</script>
+<script type="text/javascript">
+  var DocNav = React.createClass({displayName: "DocNav",
+    getInitialState: function() {
+      return {
+        toggleActive: false,
+      };
+    },
+    getDefaultProps: function() {
+      return {
+        currentDoc: "使用 Relay 和 GraphQL",
+        currentGroup: "构建 F8 2016 App",
+        data: docnavData,
+      }
+    },
+    handleSlide: function(id) {
+      this.setState({
+        toggleActive: !this.state.toggleActive,
+      });
+    },
+    render: function() {
+      var classes = React.addons.classSet({
+        'navToggle': true,
+        'navToggleActive': this.state.toggleActive,
+      });
+      var navClasses = React.addons.classSet({
+        'toggleNav': true,
+        'toggleNavActive': this.state.toggleActive,
+      });
+      return (
+        React.createElement("div", {className: navClasses},
+          React.createElement("section", null,
+            this.props.data.map(this.renderNavGroups)
+          ),
+          React.createElement("div", {className: classes, onClick: this.handleSlide},
+            React.createElement("span", null, "目录"), React.createElement("i", null, String.fromCharCode(43))
+          )
+        )
+      );
+    },
+    renderNavGroups: function(child, index) {
+      var classes = React.addons.classSet({
+        'navGroup': true,
+        'navGroupActive': this.props.currentGroup === child.group,
+      });
+      return (
+        React.createElement("div", {className: classes, key: index},
+          React.createElement("h3", null, "目录"),
+          React.createElement("ul", null,
+            child.items.map(this.renderNavItems)
+          )
+        )
+      );
+    },
+    renderNavItems: function(child, index) {
+      var itemClasses = React.addons.classSet({
+        'navListItem': true,
+        'navListItemActive': this.props.currentDoc === child.title,
+        'navListItemAppendix': child.type === 'appendix',
+      });
+      var classes = React.addons.classSet({
+        'navItem': true,
+        'navItemActive': this.props.currentDoc === child.title,
+      });
+      return (
+        React.createElement("li", {className: itemClasses, key: index}, React.createElement("a", {className: classes, href: child.url},  child.partlabel +': '+ child.title))
+      );
+    },
+  });
+
+  function docNavRender(docnavData) {
+    React.render(
+      React.createElement(DocNav, {data: docnavData}),
+      document.getElementById('doc_nav')
+    );
+  }
+  docNavRender(docnavData);
+</script>
+
+  </div>
+</div>
+
+
+      <div class="footerContainer">
+  <div id="footer_wrap" class="wrapper footerWrapper">
+    <div class="footerBlocks">
+      <div id="fb_oss" class="footerSection fbOpenSourceFooter">
+          <svg class="facebookOSSLogoSvg" viewBox="0 0 1133.9 1133.9" x="0px" y="0px">
+            <g>
+              <path class="logoRing outerRing" d="M 498.3 3.7 c 153.6 88.9 307.3 177.7 461.1 266.2 c 7.6 4.4 10.3 9.1 10.3 17.8 c -0.3 179.1 -0.2 358.3 0 537.4 c 0 8.1 -2.4 12.8 -9.7 17.1 c -154.5 88.9 -308.8 178.1 -462.9 267.5 c -9 5.2 -15.5 5.3 -24.6 0.1 c -153.9 -89.2 -307.9 -178 -462.1 -266.8 C 3 838.8 0 833.9 0 825.1 c 0.3 -179.1 0.2 -358.3 0 -537.4 c 0 -8.6 2.6 -13.6 10.2 -18 C 164.4 180.9 318.4 92 472.4 3 C 477 -1.5 494.3 -0.7 498.3 3.7 Z M 48.8 555.3 c 0 79.9 0.2 159.9 -0.2 239.8 c -0.1 10 3 15.6 11.7 20.6 c 137.2 78.8 274.2 157.8 411 237.3 c 9.9 5.7 17 5.7 26.8 0.1 c 137.5 -79.8 275.2 -159.2 412.9 -238.5 c 7.4 -4.3 10.5 -8.9 10.5 -17.8 c -0.3 -160.2 -0.3 -320.5 0 -480.7 c 0 -8.8 -2.8 -13.6 -10.3 -18 C 772.1 218 633.1 137.8 494.2 57.4 c -6.5 -3.8 -11.5 -4.5 -18.5 -0.5 C 336.8 137.4 197.9 217.7 58.8 297.7 c -7.7 4.4 -10.2 9.2 -10.2 17.9 C 48.9 395.5 48.8 475.4 48.8 555.3 Z" />
+              <path class="logoRing middleRing" d="M 184.4 555.9 c 0 -33.3 -1 -66.7 0.3 -100 c 1.9 -48 24.1 -86 64.7 -110.9 c 54.8 -33.6 110.7 -65.5 167 -96.6 c 45.7 -25.2 92.9 -24.7 138.6 1 c 54.4 30.6 108.7 61.5 162.2 93.7 c 44 26.5 67.3 66.8 68 118.4 c 0.9 63.2 0.9 126.5 0 189.7 c -0.7 50.6 -23.4 90.7 -66.6 116.9 c -55 33.4 -110.8 65.4 -167.1 96.5 c -43.4 24 -89 24.2 -132.3 0.5 c -57.5 -31.3 -114.2 -64 -170 -98.3 c -41 -25.1 -62.9 -63.7 -64.5 -112.2 C 183.5 621.9 184.3 588.9 184.4 555.9 Z M 232.9 556.3 c 0 29.5 0.5 59.1 -0.1 88.6 c -0.8 39.2 16.9 67.1 50.2 86.2 c 51.2 29.4 102.2 59.2 153.4 88.4 c 31.4 17.9 63.6 18.3 95 0.6 c 53.7 -30.3 107.1 -61.2 160.3 -92.5 c 29.7 -17.5 45 -44.5 45.3 -78.8 c 0.6 -61.7 0.5 -123.5 0 -185.2 c -0.3 -34.4 -15.3 -61.5 -44.9 -79 C 637.7 352.6 583 320.8 527.9 290 c -27.5 -15.4 -57.2 -16.1 -84.7 -0.7 c -56.9 31.6 -113.4 64 -169.1 97.6 c -26.4 15.9 -40.7 41.3 -41.1 72.9 C 232.6 491.9 232.9 524.1 232.9 556.3 Z" />
+              <path class="logoRing innerRing" d="M 484.9 424.4 c 69.8 -2.8 133.2 57.8 132.6 132 C 617 630 558.5 688.7 484.9 689.1 c -75.1 0.4 -132.6 -63.6 -132.7 -132.7 C 352.1 485 413.4 421.5 484.9 424.4 Z M 401.3 556.7 c -3.4 37.2 30.5 83.6 83 84.1 c 46.6 0.4 84.8 -37.6 84.9 -84 c 0.1 -46.6 -37.2 -84.4 -84.2 -84.6 C 432.2 472.1 397.9 518.3 401.3 556.7 Z" />
+            </g>
+          </svg>
+        <h2><a class="footerLink" href="https://code.facebook.com/projects/" target="_blank">Facebook Open Source</a></h2>
+      </div>
+      <div class="footerSection rightAlign">
+        <a class="footerLink" href="https://github.com/liaohuqiu/f8-app-tutorial-cn" target="_blank">本文档 GitHub 项目</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43024238-14', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+    </div>
+  </body>
+
+</html>
