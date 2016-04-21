@@ -165,7 +165,7 @@
 
 <p>那么我们真正使用的框架，Redux 和 Flux 又是怎样一个关系呢？</p>
 
-<h3 id="flux-to-redux">从Flux 到 Redux</h3>
+<h3 id="flux-to-redux">从 Flux 到 Redux</h3>
 
 <p>Redux 是一个实现了 Flux 架构，但又从 Flux 中剥离的框架。<a href="https://github.com/reactjs/react-redux">react-redux 包提供的官方的数据绑定实现</a> 使得和 React 的集成变得很简单。</p>
 
@@ -206,7 +206,7 @@
   <li><code class="highlighter-rouge">state</code> 大体上是不可变的。创建一系列的 <code class="highlighter-rouge">state</code> ，每个 <code class="highlighter-rouge">state</code> 代表每个个体的变化。这给我们了一个 app 中清晰并且易于追溯的 <code class="highlighter-rouge">state</code> 历史。</li>
 </ul>
 
-<h3 id="putting-this-together">Putting This Together</h3>
+<h3 id="section">整体</h3>
 
 <p>我们已经抽象地谈到了数据流，现在让我们看看我们的 app 中是如何运用的，以及我们从中学到的什么。</p>
 
@@ -215,8 +215,6 @@
 <p><a href="http://redux.js.org/docs/basics/Store.html">Redux 的文档</a> 很好地解释了如何创建一个简单的 Store，我们假设对文档所说的这些基础部分，你已经游刃有余。</p>
 
 <h5 id="store-">Store 的离线同步</h5>
-
-<p>We’ve talked before about needing local offline storage of the data, so that the app can operate in low-signal or no-signal conditions (vital at a tech conference!). Luckily, because we’re using Redux, there’s a very simple module we can use with our app called</p>
 
 <p>前面我们提到，为了我们的 app 能在没有网络或者网络条件不好的情况下工作，我们需要离线的本地存储。幸好，我们使用 Redux，有一个非常简单 module 可以用在我们的 app 中：<a href="https://www.npmjs.com/package/redux-persist">Redux 的持久化</a>。</p>
 
@@ -294,7 +292,7 @@
 
 <p>目前位置，我们的 Store 基本上算处理完了。如果你想了解更多，你可以看看： <a href="https://www.npmjs.com/package/redux-persist#basic-usage">Redux 持久化实现的技术细节</a>。</p>
 
-<h3 id="reducers">Reducers</h3>
+<h3 id="reducer">Reducer</h3>
 
 <p>在 <a href="#flux-to-redux">前面关于 Redux 的阐释中</a>，我们提到 Redux 引入了一个 Reducer 对象。一个 app 可以有多个 Reducer，每个关注 <code class="highlighter-rouge">state</code> 的不同部分。比如：在一个带评论的 app 中，有一个 Reducer 处理登录相关的状态，另外一个 Reducer 处理评论数据。</p>
 
@@ -425,7 +423,7 @@
   <p>注意， 22 行我们使用了 ES2015  <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment">destructuring assignment</a> 把 <code class="highlighter-rouge">action.data</code> 中对应 key 为左边变量名的值，赋值给了左边的变量。</p>
 </blockquote>
 
-<h5 id="section">1. 初始状态</h5>
+<h5 id="section-1">1. 初始状态</h5>
 
 <p>最开始，我们在第 12 行，依照 <a href="http://flowtype.org/docs/type-aliases.html">Flow 的类型别名规范</a> （<a href="/tutorials/building-the-f8-app/testing/">测试相关的章节</a> 详谈），我们定义了初始状态。 <code class="highlighter-rouge">initialState</code> 定义的值，会在 app 一启动就加载。</p>
 
@@ -551,7 +549,7 @@
 
 <p>这样的异步调用的好处就是，我们在等待 <code class="highlighter-rouge">Parse.Config</code> 返回的时候，其他异步的操作也可以同时进行。我们可以执行一系列的并发操作，而不必相互等待，以提高效率。</p>
 
-<h3 id="section-1">组件绑定</h3>
+<h3 id="section-2">组件绑定</h3>
 
 <p>现在我们在我们 app 的 <code class="highlighter-rouge">setup()</code> 函数中把 Redux 的逻辑和 React 连接起来：</p>
 
